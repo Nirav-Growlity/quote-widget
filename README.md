@@ -6,6 +6,8 @@ A small Android home-screen widget that shows **your own quotes**. It's free, ha
 - **Pin one, several, or none.** If you pin quotes, the widget rotates only through those. With no pins, it rotates through all of them.
 - **Choose how often it changes.** Any number of minutes, hours or days. You can also shuffle the order.
 - **Tap the quote** on the widget to skip to the next one. Tap the small corner text to open the app.
+- **Text that fits itself.** Each widget measures its real size and uses the largest text that shows the whole quote. Resize the widget and the text re-fits. Text never shrinks below a readable 13sp. A quote too long for that becomes scrollable, with a scrollbar and a "↕ scroll" hint.
+- **Light, dark, or follow the system.** This applies to both the app and the widget.
 - **Material You.** On Android 12 and newer, the widget and app use your wallpaper colours. You can pick from four styles (tinted, neutral, bold accent, transparent), plus text size and alignment, with a live preview.
 - **Updates itself from this repo.** Each push to `main` builds a signed APK and publishes it as a release. The app checks for a newer release when you open it and installs it after you confirm.
 
@@ -16,7 +18,7 @@ A small Android home-screen widget that shows **your own quotes**. It's free, ha
 3. Long-press your home screen, choose **Widgets**, then **Quote Widget**, and drag it out.
 4. Open the app, tap **Paste quotes**, and you're done.
 
-The first time you install an update, Android asks you to let *Quote Widget* install apps. Turn that on once. After that, updates are one tap.
+After this first install, **all updates happen inside the app**, so you never need to come back here. The first time, Android asks you to let *Quote Widget* install apps. Turn that on, press back, and the update carries on by itself. On Android 12 and newer, later updates usually install without even a confirmation screen.
 
 ## Battery
 

@@ -2,7 +2,9 @@ package io.github.niravgrowlity.quotewidget
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
@@ -27,6 +29,22 @@ class MainActivity : Activity() {
     private lateinit var header: View
     private val adapter = QuoteAdapter()
     private val units = listOf("minutes" to 1L, "hours" to 60L, "days" to 1440L)
+
+    /** An update waiting for the user to allow "install unknown apps"; resumes on return. */
+    private var pendingRelease: Updater.Release? = null
+
+    /** Applies the app's Light/Dark choice by overriding the night-mode bit for this screen. */
+    override fun attachBaseContext(base: Context) {
+        val mode = QuoteStore.themeMode(base)
+        if (mode == ThemeMode.SYSTEM) {
+            super.attachBaseContext(base)
+            return
+        }
+        val cfg = Configuration(base.resources.configuration)
+        val night = if (mode == ThemeMode.DARK) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
+        cfg.uiMode = (cfg.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or night
+        super.attachBaseContext(base.createConfigurationContext(cfg))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +89,29 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         refresh()
+        Updater.onConfirmReady = { showPendingConfirm() }
+        showPendingConfirm()
+        // Came back from the "allow installs" settings screen: carry on with the update.
+        val release = pendingRelease
+        if (release != null && packageManager.canRequestPackageInstalls()) {
+            pendingRelease = null
+            installUpdate(release)
+        }
+    }
+
+    override fun onPause() {
+        Updater.onConfirmReady = null
+        super.onPause()
+    }
+
+    private fun showPendingConfirm() {
+        val confirm = Updater.pendingConfirm ?: return
+        Updater.pendingConfirm = null
+        try {
+            startActivity(confirm)
+        } catch (e: Exception) {
+            toast("Couldn't open the installer: ${e.message}")
+        }
     }
 
     private fun <T : View> view(id: Int): T = header.findViewById(id)
@@ -106,7 +147,12 @@ class MainActivity : Activity() {
         val box = view<FrameLayout>(R.id.preview)
         box.removeAllViews()
         try {
-            box.addView(WidgetRenderer.build(this).apply(this, box))
+            // Preview at the box's real size so auto-fit / scroll mode match a widget of that size.
+            val d = resources.displayMetrics.density
+            val wDp = if (box.width > 0) (box.width / d).toInt() else (resources.configuration.screenWidthDp - 32)
+            val hDp = if (box.height > 0) (box.height / d).toInt() else 150
+            box.addView(WidgetRenderer.build(this, wDp, hDp).apply(this, box))
+            if (box.width == 0) box.post { if (box.width > 0) renderPreview() }
         } catch (_: Exception) {
             box.visibility = View.GONE
         }
@@ -152,6 +198,14 @@ class MainActivity : Activity() {
         counter.isChecked = QuoteStore.showCounter(this)
         counter.setOnCheckedChangeListener { _, on -> QuoteStore.setShowCounter(this, on); refresh() }
 
+        val currentTheme = QuoteStore.themeMode(this)
+        bindSpinner(R.id.theme_spinner, ThemeMode.entries, { it.label }, currentTheme) {
+            if (it != currentTheme) {
+                QuoteStore.setThemeMode(this, it)
+                WidgetRenderer.updateAll(this)
+                recreate() // re-applies attachBaseContext with the new mode
+            }
+        }
         bindSpinner(R.id.style_spinner, WidgetStyle.entries, { it.label }, QuoteStore.style(this)) {
             QuoteStore.setStyle(this, it)
         }
@@ -261,21 +315,32 @@ class MainActivity : Activity() {
     private fun installUpdate(release: Updater.Release) {
         if (!packageManager.canRequestPackageInstalls()) {
             AlertDialog.Builder(this)
-                .setTitle("Allow updates")
-                .setMessage("Android needs your OK for Quote Widget to install its own updates. Turn on “Allow from this source”, come back, and tap Install again.")
+                .setTitle("Allow updates (one time)")
+                .setMessage("Android needs your OK once for Quote Widget to install its own updates. Turn on “Allow from this source”, then press back. The update will carry on by itself.")
                 .setPositiveButton("Open settings") { _, _ ->
+                    pendingRelease = release
                     startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
             return
         }
-        toast("Downloading update…")
+        val button = view<Button>(R.id.btn_update)
+        val label = view<TextView>(R.id.version)
+        button.isEnabled = false
+        label.text = "Downloading ${release.name}…"
         Thread {
             try {
-                Updater.downloadAndInstall(this, release)
+                Updater.downloadAndInstall(this, release) { pct ->
+                    runOnUiThread { label.text = "Downloading ${release.name}… $pct%" }
+                }
+                runOnUiThread { label.text = "Installing ${release.name}…" }
             } catch (e: Exception) {
-                runOnUiThread { toast("Update failed: ${e.message}") }
+                runOnUiThread {
+                    button.isEnabled = true
+                    label.text = "Version ${BuildConfig.VERSION_NAME}"
+                    toast("Update failed: ${e.message}")
+                }
             }
         }.start()
     }

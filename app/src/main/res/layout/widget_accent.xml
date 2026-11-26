@@ -7,16 +7,33 @@
     android:padding="16dp"
     android:background="@drawable/bg_accent">
 
-    <TextView
-        android:id="@+id/widget_text"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:ellipsize="end"
-        android:textColor="@color/accent_text"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:layout_weight="1">
+
+        <!-- Normal mode: quote auto-fitted to the widget -->
+        <TextView
+            android:id="@+id/widget_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:lineSpacingMultiplier="1.1"
+            android:textColor="@color/accent_text"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <!-- Long-quote mode: scrollable, used when the quote won't fit at a readable size -->
+        <ListView
+            android:id="@+id/widget_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            android:fadeScrollbars="false"
+            android:scrollbarStyle="outsideOverlay"
+            android:scrollbars="vertical"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/widget_meta"
