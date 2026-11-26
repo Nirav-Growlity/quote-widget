@@ -64,7 +64,8 @@ class MainActivity : Activity() {
         setupLook()
 
         Rotation.schedule(this, force = false)
-        if (savedInstanceState == null) checkForUpdate(manual = false)
+        // Automatic update check at most once a day, and only while the app is open.
+        if (savedInstanceState == null && QuoteStore.updateCheckDue(this)) checkForUpdate(manual = false)
     }
 
     override fun onResume() {
@@ -130,6 +131,10 @@ class MainActivity : Activity() {
         val value = view<EditText>(R.id.period_value).text.toString().toLongOrNull()
         if (value == null || value < 1) { toast("Enter a number of 1 or more"); return }
         val unit = units[view<Spinner>(R.id.period_unit).selectedItemPosition]
+        if (value * unit.second < QuoteStore.MIN_PERIOD_MINUTES) {
+            toast("The shortest is ${QuoteStore.MIN_PERIOD_MINUTES} minutes, to save battery")
+            return
+        }
         QuoteStore.setPeriodMinutes(this, value * unit.second)
         Rotation.schedule(this, force = true)
         val name = if (value == 1L) unit.first.removeSuffix("s") else unit.first

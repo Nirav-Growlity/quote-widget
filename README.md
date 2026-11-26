@@ -18,6 +18,16 @@ A small Android home-screen widget that shows **your own quotes**. It's free, ha
 
 The first time you install an update, Android asks you to let *Quote Widget* install apps. Turn that on once. After that, updates are one tap.
 
+## Battery
+
+The app is built so it does almost nothing in the background:
+
+- **It never wakes the phone.** The rotation timer is a single non-wakeup alarm. If it comes due while the screen is off, it waits and fires the next time you turn the screen on.
+- **One timer, only while a widget exists.** If no widget is on the home screen, no timer is set at all.
+- **The shortest rotation is 15 minutes**, the same minimum Android uses for its own background jobs.
+- **Nothing keeps running.** There are no background services, wake locks or polling. Each quote change takes a few milliseconds, after which Android can close the app completely.
+- **It only uses the network in the foreground.** The update check runs only while the app is open, at most once a day, or when you tap **Check for updates**. The widget never uses the network.
+
 ## How releases work
 
 `.github/workflows/release.yml` runs on every push to `main`:

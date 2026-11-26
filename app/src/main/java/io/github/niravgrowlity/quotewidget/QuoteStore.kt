@@ -128,7 +128,20 @@ object QuoteStore {
 
     // ---------- settings ----------
 
-    fun periodMinutes(ctx: Context): Long = prefs(ctx).getLong("period", 1440L)
+    /** Same floor Android uses for its own periodic background work. */
+    const val MIN_PERIOD_MINUTES = 15L
+
+    fun periodMinutes(ctx: Context): Long =
+        prefs(ctx).getLong("period", 1440L).coerceAtLeast(MIN_PERIOD_MINUTES)
+
+    /** True at most once per 24h; records the check when it returns true. */
+    fun updateCheckDue(ctx: Context): Boolean {
+        val now = System.currentTimeMillis()
+        val last = prefs(ctx).getLong("lastUpdateCheck", 0L)
+        if (now - last < 24 * 60 * 60_000L) return false
+        prefs(ctx).edit().putLong("lastUpdateCheck", now).apply()
+        return true
+    }
     fun setPeriodMinutes(ctx: Context, m: Long) = prefs(ctx).edit().putLong("period", m).apply()
 
     fun shuffle(ctx: Context): Boolean = prefs(ctx).getBoolean("shuffle", false)
