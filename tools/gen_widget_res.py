@@ -28,9 +28,6 @@ SYS = {
     "paper_acc":  {"light": ("#3F5AA6", "system_accent1_500"), "dark": ("#B6C4FF", "system_accent1_200")},
     "bold_bg":    {"light": ("#3F5AA6", "system_accent1_600"), "dark": ("#B6C4FF", "system_accent1_200")},
     "bold_text":  {"light": ("#FFFFFF", "system_accent1_0"),   "dark": ("#0F2357", "system_accent1_800")},
-    "grad_a":     {"light": ("#3F5AA6", "system_accent1_500"), "dark": ("#2F3F6E", "system_accent1_700")},
-    "grad_b":     {"light": ("#8A4F7D", "system_accent3_500"), "dark": ("#6A3A60", "system_accent3_700")},
-    "grad_text":  {"light": ("#FFFFFF", "system_accent1_0"),   "dark": ("#FFFFFF", "system_accent1_0")},
 }
 
 # ---------------------------------------------------------------- themes
@@ -44,19 +41,44 @@ THEMES = [
          acc="tonal_acc", font="sans-serif-medium", deco="stripe"),
     dict(enum="BOLD", label="Bold", wallpaper=True, bg=("solid", "bold_bg"), fg="bold_text",
          acc="bold_text", font="sans-serif", bold=True),
-    dict(enum="GRADIENT", label="Gradient", wallpaper=True, bg=("gradient", ["grad_a", "grad_b"]),
-         fg="grad_text", acc="grad_text", font="sans-serif-medium", soft_shadow=True),
     dict(enum="CLEAR", label="No background", wallpaper=True, bg=None, fg="#FFFFFF", acc="#FFFFFF",
          font="sans-serif-medium", shadow=True),
-    # --- colour themes ---
-    dict(enum="SUNSET", label="Sunset", bg=("gradient", ["#FFA06B", "#F2545B", "#A93F6E"]),
-         fg="#FFFFFF", acc="#FFE3D3", font="serif", soft_shadow=True),
-    dict(enum="LAGOON", label="Lagoon", bg=("gradient", ["#2FC4C9", "#2F80D9", "#3D4FC4"]),
-         fg="#FFFFFF", acc="#C9F6F4", font="sans-serif-medium", soft_shadow=True),
-    dict(enum="PASTEL", label="Pastel", bg=("gradient", ["#C7B5F7", "#F5C6E4", "#FFE0C4"]),
-         fg="#2E1F4D", acc="#6B4FA0", font="serif", deco="mark"),
-    dict(enum="ULTRAVIOLET", label="Ultraviolet", bg=("gradient", ["#9B3BEA", "#5320D8"]),
-         fg="#FFFFFF", acc="#FFD166", font="sans-serif", bold=True, deco="dot"),
+    # --- palettes from popular open-source colour schemes (official hex values, MIT licensed) ---
+    dict(enum="CATPPUCCIN_LATTE", label="Catppuccin Latte", group="palette", bg=("solid", "#EFF1F5"),
+         fg="#4C4F69", acc="#8839EF", font="sans-serif-medium", deco="mark"),
+    dict(enum="CATPPUCCIN_MOCHA", label="Catppuccin Mocha", group="palette", bg=("solid", "#1E1E2E"),
+         fg="#CDD6F4", acc="#CBA6F7", font="sans-serif-medium", deco="mark"),
+    dict(enum="ROSE_PINE", label="Rosé Pine", group="palette", bg=("solid", "#191724"),
+         fg="#E0DEF4", acc="#EBBCBA", font="serif", deco="stripe"),
+    dict(enum="ROSE_PINE_DAWN", label="Rosé Pine Dawn", group="palette", bg=("solid", "#FAF4ED"),
+         fg="#575279", acc="#D7827E", font="serif", deco="stripe"),
+    dict(enum="NORD", label="Nord", group="palette", bg=("solid", "#2E3440"),
+         fg="#ECEFF4", acc="#88C0D0", font="sans-serif-medium", deco="stripe"),
+    dict(enum="NORD_SNOW", label="Nord Snow", group="palette", bg=("solid", "#ECEFF4"),
+         fg="#2E3440", acc="#5E81AC", font="sans-serif-medium", deco="stripe"),
+    dict(enum="GRUVBOX", label="Gruvbox", group="palette", bg=("solid", "#282828"),
+         fg="#EBDBB2", acc="#FABD2F", font="serif", deco="mark"),
+    dict(enum="GRUVBOX_LIGHT", label="Gruvbox Light", group="palette", bg=("solid", "#FBF1C7"),
+         fg="#3C3836", acc="#AF3A03", font="serif", deco="mark"),
+    dict(enum="DRACULA", label="Dracula", group="palette", bg=("solid", "#282A36"),
+         fg="#F8F8F2", acc="#FF79C6", font="monospace", deco="dot"),
+    dict(enum="SOLARIZED_LIGHT", label="Solarized Light", group="palette", bg=("solid", "#FDF6E3"),
+         fg="#586E75", acc="#CB4B16", font="serif", deco="stripe"),
+    dict(enum="SOLARIZED_DARK", label="Solarized Dark", group="palette", bg=("solid", "#002B36"),
+         fg="#93A1A1", acc="#B58900", font="serif", deco="stripe"),
+    dict(enum="TOKYO_NIGHT", label="Tokyo Night", group="palette", bg=("solid", "#1A1B26"),
+         fg="#C0CAF5", acc="#7AA2F7", font="monospace", deco="dot"),
+    dict(enum="EVERFOREST", label="Everforest", group="palette", bg=("solid", "#2D353B"),
+         fg="#D3C6AA", acc="#A7C080", font="serif", deco="mark"),
+    dict(enum="EVERFOREST_LIGHT", label="Everforest Light", group="palette", bg=("solid", "#FDF6E3"),
+         fg="#5C6A72", acc="#8DA101", font="serif", deco="mark"),
+    dict(enum="KANAGAWA", label="Kanagawa", group="palette", bg=("solid", "#1F1F28"),
+         fg="#DCD7BA", acc="#E6C384", font="serif", deco="mark"),
+    dict(enum="KANAGAWA_LOTUS", label="Kanagawa Lotus", group="palette", bg=("solid", "#F2ECBC"),
+         fg="#545464", acc="#C84053", font="serif", deco="mark"),
+    dict(enum="ONE_DARK", label="One Dark", group="palette", bg=("solid", "#282C34"),
+         fg="#ABB2BF", acc="#61AFEF", font="monospace", deco="dot"),
+    # --- originals ---
     dict(enum="MATCHA", label="Matcha", bg=("solid", "#DCE6CF"), fg="#24361F", acc="#5F8A44",
          font="serif", deco="mark"),
     dict(enum="LILAC", label="Lilac", bg=("solid", "#ECE4FF"), fg="#2F2059", acc="#7C5CFA",
@@ -327,7 +349,7 @@ for t in THEMES:
     start = DECO_START.get(deco, 0) if deco in DECO_START else 0
     enum_rows.append(
         f'    {t["enum"]}(\n'
-        f'        "{t["label"]}", wallpaper = {str(bool(t.get("wallpaper"))).lower()}, '
+        f'        "{t["label"]}", StyleGroup.{"WALLPAPER" if t.get("wallpaper") else t.get("group", "original").upper()}, '
         f'family = "{t["font"]}", bold = {str(bold).lower()}, startDp = {start}f, '
         f'leftAligned = {str(deco in ("mark", "stripe")).lower()},\n'
         f'        layouts = intArrayOf({", ".join(main_ids)}),\n'
@@ -341,14 +363,21 @@ import android.graphics.Typeface
 
 // Generated by tools/gen_widget_res.py. Do not edit by hand.
 
+/** How themes are grouped in the style picker, in display order. */
+enum class StyleGroup(val title: String) {{
+    PALETTE("Classic palettes"),
+    ORIGINAL("Originals"),
+    WALLPAPER("Match my wallpaper"),
+}}
+
 /**
- * Widget themes. [wallpaper] themes take colours from the wallpaper and have light/dark
- * variants; the others are fixed colour palettes. [family], [bold] and [startDp] mirror the
+ * Widget themes. WALLPAPER themes take colours from the wallpaper and have light/dark
+ * variants; the others are fixed palettes. [family], [bold] and [startDp] mirror the
  * generated layouts so the auto-fit measures text exactly as it will be drawn.
  */
 enum class WidgetStyle(
     val label: String,
-    val wallpaper: Boolean,
+    val group: StyleGroup,
     val family: String,
     val bold: Boolean,
     val startDp: Float,
@@ -358,6 +387,8 @@ enum class WidgetStyle(
     private val items: IntArray,
 ) {{
 {",\n".join(enum_rows)};
+
+    val wallpaper: Boolean get() = group == StyleGroup.WALLPAPER
 
     fun layout(mode: ThemeMode) = layouts[mode.ordinal]
     fun item(mode: ThemeMode) = items[mode.ordinal]

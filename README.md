@@ -8,7 +8,11 @@ A small Android home-screen widget that shows **your own quotes**. It's free, ha
 - **Tap the quote** on the widget to skip to the next one. Tap the small corner text to open the app.
 - **Text that fits itself.** Each widget measures its real size and uses the largest text that shows the whole quote. Resize the widget and the text re-fits. Text never shrinks below a readable 13sp. A quote too long for that becomes scrollable, with a scrollbar and a "Scroll for more" hint.
 - **Light, dark, or follow the system.** This applies to both the app and the widget.
-- **Material You.** On Android 12 and newer, the app and widget use your wallpaper colours. There are five widget styles: *Editorial* (serif with an accent quote mark), *Tonal*, *Bold*, *Gradient* and *No background*. Each comes in light and dark, and you can also set the text size and alignment. The app shows a live preview of every option.
+- **27 widget themes, all flat colours with no gradients.**
+  - *Classic palettes*: Catppuccin, Rosé Pine, Nord, Gruvbox, Dracula, Solarized, Tokyo Night, Everforest, Kanagawa and One Dark, in their light and dark variants.
+  - *Originals*: Matcha, Lilac, Apricot, Citrus, Midnight and Mono.
+  - *Match my wallpaper*: four Material You styles that take their colours from your wallpaper on Android 12 and newer.
+  - Each theme has one accent detail: a quote mark, a side stripe or a corner dot. A quote ending in "— Name" shows the author on their own line.
 - **Built to be calm.** The app has two tabs. *Quotes* holds your collection, with the quote currently on your widget at the top. *Widget* controls how it looks and how often it changes.
 - **Updates itself from this repo.** Each push to `main` builds a signed APK and publishes it as a release. The app checks for a newer release when you open it and installs it after you confirm.
 
@@ -42,3 +46,8 @@ The app is built so it does almost nothing in the background:
 ## Editing widget styles
 
 Widget layouts and colours are generated. Edit `tools/gen_widget_res.py`, then run `python tools/gen_widget_res.py`. It rewrites `res/layout/widget_*`, `res/drawable/wbg_*`, the colour files, and `WidgetLayouts.kt`.
+
+## Credits
+
+The classic palettes use the published colour values of these open-source themes. They are all MIT licensed:
+[Catppuccin](https://github.com/catppuccin/catppuccin), [Rosé Pine](https://github.com/rose-pine/rose-pine-theme), [Nord](https://github.com/nordtheme/nord), [Gruvbox](https://github.com/morhetz/gruvbox), [Dracula](https://github.com/dracula/dracula-theme), [Solarized](https://github.com/altercation/solarized), [Tokyo Night](https://github.com/folke/tokyonight.nvim), [Everforest](https://github.com/sainnhe/everforest), [Kanagawa](https://github.com/rebelot/kanagawa.nvim) and [One Dark](https://github.com/atom/atom/tree/master/packages/one-dark-ui).

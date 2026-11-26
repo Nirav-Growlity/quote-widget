@@ -67,6 +67,7 @@ import io.github.niravgrowlity.quotewidget.BuildConfig
 import io.github.niravgrowlity.quotewidget.QuoteStore
 import io.github.niravgrowlity.quotewidget.ROTATION_PRESETS
 import io.github.niravgrowlity.quotewidget.Rotation
+import io.github.niravgrowlity.quotewidget.StyleGroup
 import io.github.niravgrowlity.quotewidget.TextSize
 import io.github.niravgrowlity.quotewidget.ThemeMode
 import io.github.niravgrowlity.quotewidget.WidgetRenderer
@@ -119,8 +120,16 @@ fun WidgetScreen(state: AppState, padding: PaddingValues) {
             QuoteStore.setStyle(ctx, it)
             state.changed()
         }
-        StyleRow("Colour themes", WidgetStyle.entries.filter { !it.wallpaper }, style, state, pick)
-        StyleRow("Match my wallpaper", WidgetStyle.entries.filter { it.wallpaper }, style, state, pick)
+        StyleGroup.entries.forEach { group ->
+            StyleRow(group.title, WidgetStyle.entries.filter { it.group == group }, style, state, pick)
+        }
+        Text(
+            "Classic palettes use the published colours of Catppuccin, Rosé Pine, Nord, Gruvbox, Dracula, " +
+                "Solarized, Tokyo Night, Everforest, Kanagawa and One Dark.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 20.dp),
+        )
 
         SectionTitle("Appearance")
         Setting("Theme") {
@@ -292,6 +301,8 @@ private fun StyleTile(state: AppState, style: WidgetStyle, selected: Boolean, on
                 style.label,
                 style = MaterialTheme.typography.labelLarge,
                 color = if (selected) c.primary else c.onSurface,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
         }
     }

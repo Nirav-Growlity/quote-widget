@@ -15,10 +15,4 @@
     <color name="bold_bg_dark">@android:color/system_accent1_200</color>
     <color name="bold_text_light">@android:color/system_accent1_0</color>
     <color name="bold_text_dark">@android:color/system_accent1_800</color>
-    <color name="grad_a_light">@android:color/system_accent1_500</color>
-    <color name="grad_a_dark">@android:color/system_accent1_700</color>
-    <color name="grad_b_light">@android:color/system_accent3_500</color>
-    <color name="grad_b_dark">@android:color/system_accent3_700</color>
-    <color name="grad_text_light">@android:color/system_accent1_0</color>
-    <color name="grad_text_dark">@android:color/system_accent1_0</color>
 </resources>
