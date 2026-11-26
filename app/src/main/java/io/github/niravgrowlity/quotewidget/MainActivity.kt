@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity(), UpdateActions {
         super.onStart()
         val crashed = QuoteStore.takeCrashFlag(this)
         if (state.updating || state.available != null) return
-        if (crashed || QuoteStore.updateCheckDue(this)) checkForUpdate(manual = false)
+        if (crashed || (QuoteStore.autoUpdateCheck(this) && QuoteStore.updateCheckDue(this))) checkForUpdate(manual = false)
     }
 
     companion object {

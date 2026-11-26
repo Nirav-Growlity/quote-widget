@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -65,6 +66,11 @@ fun QuoteApp(state: AppState) {
                         icon = { Icon(AppIcons.Widgets, contentDescription = null) },
                         label = { Text("Widget") },
                     )
+                    NavigationBarItem(
+                        selected = tab == 2, onClick = { tab = 2 },
+                        icon = { Icon(Icons.Rounded.Settings, contentDescription = null) },
+                        label = { Text("Settings") },
+                    )
                 }
             },
             floatingActionButton = {
@@ -79,7 +85,8 @@ fun QuoteApp(state: AppState) {
         ) { padding ->
             when (tab) {
                 0 -> QuotesScreen(state, padding, onAdd = { adding = true })
-                else -> WidgetScreen(state, padding)
+                1 -> WidgetScreen(state, padding)
+                else -> SettingsScreen(state, padding)
             }
         }
     }

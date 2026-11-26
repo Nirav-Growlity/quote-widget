@@ -20,7 +20,7 @@ A small Android home-screen widget that shows **your own quotes**. It's free, ha
   - *Typewriter*: Special Elite, Courier Prime, IBM Plex Mono and JetBrains Mono.
   - *Display*: Abril Fatface, Bebas Neue, Alfa Slab One and Righteous.
   - Every font works with every theme, and *Theme font* keeps each theme's own font.
-- **Built to be calm.** The app has two tabs. *Quotes* holds your collection, with the quote currently on your widget at the top. *Widget* controls how it looks and how often it changes.
+- **Built to be calm.** The app has three tabs. *Quotes* holds your collection, with the quote currently on your widget at the top. *Widget* controls how the widget looks and how often it changes. *Settings* holds app-wide options: light or dark theme, updates, and links to the source and licences.
 - **Updates itself from this repo.** Each push to `main` builds a signed APK and publishes it as a release. The app checks for a newer release when you open it and installs it after you confirm.
 
 ## Install
@@ -40,7 +40,7 @@ The app is built so it does almost nothing in the background:
 - **One timer, only while a widget exists.** If no widget is on the home screen, no timer is set at all.
 - **The shortest rotation is 15 minutes**, the same minimum Android uses for its own background jobs.
 - **Nothing keeps running.** There are no background services, wake locks or polling. Each quote change takes a few milliseconds, after which Android can close the app completely.
-- **It only uses the network in the foreground.** The update check runs only when you open the app (at most once every 10 minutes) or tap **Check now**. If a newer version exists, a popup offers to install it. The widget never uses the network.
+- **It only uses the network in the foreground.** The update check runs only when you open the app (at most once every 10 minutes) or tap **Check now** in Settings. You can turn off the automatic check there. If a newer version exists, a popup offers to install it. The widget never uses the network.
 
 ## How releases work
 

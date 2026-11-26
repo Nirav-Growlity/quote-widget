@@ -224,6 +224,10 @@ object QuoteStore {
     fun themeMode(ctx: Context): ThemeMode = enumOr(prefs(ctx).getString("theme", null), ThemeMode.SYSTEM)
     fun setThemeMode(ctx: Context, m: ThemeMode) = prefs(ctx).edit().putString("theme", m.name).commit()
 
+    /** Check for a new version each time the app opens (Settings). */
+    fun autoUpdateCheck(ctx: Context): Boolean = prefs(ctx).getBoolean("autoUpdate", true)
+    fun setAutoUpdateCheck(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("autoUpdate", on).apply()
+
     fun showCounter(ctx: Context): Boolean = prefs(ctx).getBoolean("counter", true)
     fun setShowCounter(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("counter", on).apply()
 

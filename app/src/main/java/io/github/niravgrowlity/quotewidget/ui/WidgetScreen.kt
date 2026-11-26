@@ -32,7 +32,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,13 +66,11 @@ import io.github.niravgrowlity.quotewidget.FontCategory
 import io.github.niravgrowlity.quotewidget.QuoteFont
 import androidx.compose.ui.viewinterop.AndroidView
 import io.github.niravgrowlity.quotewidget.Align
-import io.github.niravgrowlity.quotewidget.BuildConfig
 import io.github.niravgrowlity.quotewidget.QuoteStore
 import io.github.niravgrowlity.quotewidget.ROTATION_PRESETS
 import io.github.niravgrowlity.quotewidget.Rotation
 import io.github.niravgrowlity.quotewidget.StyleGroup
 import io.github.niravgrowlity.quotewidget.TextSize
-import io.github.niravgrowlity.quotewidget.ThemeMode
 import io.github.niravgrowlity.quotewidget.WidgetRenderer
 import io.github.niravgrowlity.quotewidget.WidgetStyle
 
@@ -154,17 +151,6 @@ fun WidgetScreen(state: AppState, padding: PaddingValues) {
         )
 
         SectionTitle("Appearance")
-        Setting("Theme") {
-            Segmented(ThemeMode.entries, state.themeMode, { it.label }) { state.setTheme(it) }
-            if (!style.wallpaper) {
-                Text(
-                    "${style.label} keeps its own colours. Light and dark change the app and wallpaper styles.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
-        }
         Setting("Largest text size") {
             Segmented(TextSize.entries, QuoteStore.textSize(ctx), { it.label }) {
                 QuoteStore.setTextSize(ctx, it)
@@ -207,24 +193,6 @@ fun WidgetScreen(state: AppState, padding: PaddingValues) {
         SwitchRow("Shuffle", "Mix up the order each time it goes through your quotes", QuoteStore.shuffle(ctx)) {
             QuoteStore.setShuffle(ctx, it)
             state.changed()
-        }
-
-        SectionTitle("Updates")
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    state.updateStatus ?: "New versions install from inside the app",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            FilledTonalButton(onClick = { state.updates.checkForUpdate(manual = true) }, enabled = !state.updating) {
-                Text("Check now")
-            }
         }
     }
 
@@ -409,7 +377,7 @@ private fun FontTile(font: QuoteFont, style: WidgetStyle, selected: Boolean, onC
 }
 
 @Composable
-private fun SectionTitle(text: String) {
+internal fun SectionTitle(text: String) {
     Text(
         text,
         style = MaterialTheme.typography.titleMedium,
@@ -420,7 +388,7 @@ private fun SectionTitle(text: String) {
 }
 
 @Composable
-private fun Setting(label: String, content: @Composable () -> Unit) {
+internal fun Setting(label: String, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
         Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = 8.dp))
         content()
@@ -428,7 +396,7 @@ private fun Setting(label: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun <T> Segmented(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
+internal fun <T> Segmented(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         options.forEachIndexed { i, option ->
             SegmentedButton(
@@ -441,7 +409,7 @@ private fun <T> Segmented(options: List<T>, selected: T, label: (T) -> String, o
 }
 
 @Composable
-private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+internal fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
