@@ -475,11 +475,21 @@ enum class QuoteFont(
 
     fun layout(shadow: Boolean) = if (shadow) shadowLayout else plainLayout
 
-    /** The bundled typeface, loaded once per process. Null for [THEME]. */
+    /**
+     * The bundled typeface, loaded once per process. Null for [THEME], and also null if the font
+     * can't be loaded, so callers fall back to the theme font instead of crashing.
+     */
     fun typeface(ctx: Context): Typeface? {{
         if (font == 0) return null
-        return cache.getOrPut(this) {{ ctx.resources.getFont(font) }}
+        cache[this]?.let {{ return it }}
+        return runCatching {{ ctx.resources.getFont(font) }}
+            .onFailure {{ android.util.Log.w("QuoteWidget", "font $name failed to load", it) }}
+            .getOrNull()
+            ?.also {{ cache[this] = it }}
     }}
+
+    /** Whether this font can be used. THEME always can; a broken font is treated as THEME. */
+    fun usable(ctx: Context) = this == THEME || typeface(ctx) != null
 
     private companion object {{
         val cache = java.util.concurrent.ConcurrentHashMap<QuoteFont, Typeface>()

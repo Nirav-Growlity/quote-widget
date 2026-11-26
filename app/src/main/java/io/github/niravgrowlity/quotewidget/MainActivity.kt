@@ -39,8 +39,21 @@ class MainActivity : ComponentActivity(), UpdateActions {
         }
 
         Rotation.schedule(this, force = false)
-        // Automatic update check at most once a day, and only while the app is open.
-        if (savedInstanceState == null && QuoteStore.updateCheckDue(this)) checkForUpdate(manual = false)
+        // Automatic update check at most once a day, and only while the app is open. After a
+        // crash it checks straight away, so a broken release can always be fixed by an update
+        // even if the crash makes the "Check now" button unreachable.
+        val crashed = QuoteStore.takeCrashFlag(this)
+        if (savedInstanceState == null && (crashed || QuoteStore.updateCheckDue(this))) checkForUpdate(manual = false)
+    }
+
+    companion object {
+        init {
+            val previous = Thread.getDefaultUncaughtExceptionHandler()
+            Thread.setDefaultUncaughtExceptionHandler { t, e ->
+                runCatching { QuoteStore.markCrashed(AppState.appContext) }
+                previous?.uncaughtException(t, e)
+            }
+        }
     }
 
     override fun onResume() {

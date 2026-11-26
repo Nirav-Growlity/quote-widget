@@ -28,11 +28,13 @@ LICENSES = os.path.join(ROOT, "FONT_LICENSES.txt")
 # currency and a few symbols people put in quotes.
 UNICODES = "U+0020-007E,U+00A0-024F,U+2000-206F,U+20A0-20CF,U+2100-2122,U+2190-2193,U+2212,U+2665"
 
-UA = "Mozilla/5.0 (Windows NT 6.1; rv:10.0) Gecko/20100101 Firefox/10.0"  # gets plain TTF urls
+# With no browser user agent, Google Fonts serves plain TrueType. Browser user agents get WOFF,
+# which Android can't load (that shipped once in v1.0.9 and crashed the Widget tab).
+ANDROID_FONT_MAGIC = (bytes([0, 1, 0, 0]), b"OTTO", b"true")
 
 
 def get(url):
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    req = urllib.request.Request(url)
     with urllib.request.urlopen(req, timeout=60) as r:
         return r.read()
 
@@ -76,6 +78,8 @@ for enum, label, family, weight, italic, cat in FONTS:
     kind, text = licenses[family]
     reserved = "Reserved Font Name" in text[:1500]
     data = get(font_url(family, weight, italic))
+    if data[:4] not in ANDROID_FONT_MAGIC:
+        raise SystemExit(f"{label}: not a TrueType/OpenType file (got {data[:4]!r})")
     out = os.path.join(FONT_DIR, f"qf_{enum.lower()}.ttf")
     if reserved:
         with open(out, "wb") as fh:
@@ -85,7 +89,10 @@ for enum, label, family, weight, italic, cat in FONTS:
         s = subset.Subsetter(opts)
         s.populate(unicodes=unicodes)
         s.subset(font)
+        font.flavor = None  # always write plain TrueType
         font.save(out)
+    with open(out, "rb") as fh:
+        assert fh.read(4) in ANDROID_FONT_MAGIC, out
     size = os.path.getsize(out)
     total += size
     print(f"{label:22s} {size // 1024:4d} KB{'  (unmodified: reserved name)' if reserved else ''}")

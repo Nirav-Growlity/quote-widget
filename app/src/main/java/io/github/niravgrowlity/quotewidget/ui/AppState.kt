@@ -38,6 +38,9 @@ class AppState private constructor(private val ctx: Context) {
         @Volatile private var instance: AppState? = null
         fun get(ctx: Context): AppState =
             instance ?: synchronized(this) { instance ?: AppState(ctx.applicationContext).also { instance = it } }
+
+        /** The application context once the app has started, for the crash handler. */
+        val appContext: Context? get() = instance?.ctx
     }
 
     var tick by mutableIntStateOf(0)

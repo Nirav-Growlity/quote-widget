@@ -167,6 +167,20 @@ object QuoteStore {
     fun periodMinutes(ctx: Context): Long =
         prefs(ctx).getLong("period", 1440L).coerceAtLeast(MIN_PERIOD_MINUTES)
 
+    /** Set when the app crashes; written synchronously because the process is about to die. */
+    fun markCrashed(ctx: Context?) {
+        ctx ?: return
+        prefs(ctx).edit().putBoolean("crashed", true).commit()
+    }
+
+    /** True once after a crash, then cleared. */
+    fun takeCrashFlag(ctx: Context): Boolean {
+        val p = prefs(ctx)
+        if (!p.getBoolean("crashed", false)) return false
+        p.edit().putBoolean("crashed", false).apply()
+        return true
+    }
+
     /** True at most once per 24h; records the check when it returns true. */
     fun updateCheckDue(ctx: Context): Boolean {
         val now = System.currentTimeMillis()
@@ -196,7 +210,9 @@ object QuoteStore {
         enumOr(prefs(ctx).getString("textSize", null), TextSize.MEDIUM)
     fun setTextSize(ctx: Context, s: TextSize) = prefs(ctx).edit().putString("textSize", s.name).apply()
 
-    fun font(ctx: Context): QuoteFont = enumOr(prefs(ctx).getString("font", null), QuoteFont.THEME)
+    /** The chosen quote font; falls back to the theme font if it can't be loaded. */
+    fun font(ctx: Context): QuoteFont =
+        enumOr(prefs(ctx).getString("font", null), QuoteFont.THEME).takeIf { it.usable(ctx) } ?: QuoteFont.THEME
     fun setFont(ctx: Context, f: QuoteFont) = prefs(ctx).edit().putString("font", f.name).apply()
 
     fun align(ctx: Context): Align = enumOr(prefs(ctx).getString("align", null), Align.CENTER)
