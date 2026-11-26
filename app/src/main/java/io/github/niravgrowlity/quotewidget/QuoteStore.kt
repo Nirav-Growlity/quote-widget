@@ -181,11 +181,14 @@ object QuoteStore {
         return true
     }
 
-    /** True at most once per 24h; records the check when it returns true. */
+    /**
+     * True when the app should check for an update on opening: at most once every 10 minutes,
+     * so switching apps back and forth doesn't call GitHub each time. Records the check.
+     */
     fun updateCheckDue(ctx: Context): Boolean {
         val now = System.currentTimeMillis()
         val last = prefs(ctx).getLong("lastUpdateCheck", 0L)
-        if (now - last < 24 * 60 * 60_000L) return false
+        if (now - last in 0 until 10 * 60_000L) return false
         prefs(ctx).edit().putLong("lastUpdateCheck", now).apply()
         return true
     }

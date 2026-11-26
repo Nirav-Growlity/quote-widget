@@ -49,11 +49,15 @@
                     android:textColor="@color/paper_text_light"
                     android:textSize="18sp" />
 
-                <!-- A library font is drawn by a widget_font_* TextView added here at runtime -->
-                <FrameLayout
-                    android:id="@+id/widget_text_slot"
+                <!-- Library fonts: the quote drawn by WidgetRenderer as an image (launchers
+                     can't load an app's fonts), tinted with the theme's text colour -->
+                <ImageView
+                    android:id="@+id/widget_text_img"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:adjustViewBounds="true"
+                    android:scaleType="fitCenter"
+                    android:tint="@color/paper_text_light"
                     android:visibility="gone" />
 
                 <TextView

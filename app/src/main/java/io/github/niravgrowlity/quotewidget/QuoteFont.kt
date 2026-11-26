@@ -15,56 +15,51 @@ enum class FontCategory(val title: String) {
 
 /**
  * Fonts for the quote text. [THEME] keeps each widget style's own system font. The others are
- * Google Fonts in res/font (licences: FONT_LICENSES.txt). Widgets can only use a font that a
- * layout names in XML, so each font has its own one-TextView layout that WidgetRenderer
- * places inside the themed widget.
+ * Google Fonts in res/font (licences: FONT_LICENSES.txt). Launchers can't load an app's
+ * fonts, so WidgetRenderer draws quotes in these fonts as an image.
  */
 enum class QuoteFont(
     val label: String,
     val category: FontCategory?,
     private val font: Int,
-    private val plainLayout: Int,
-    private val shadowLayout: Int,
 ) {
-    THEME("Theme font", null, 0, 0, 0),
-    PLAYFAIR("Playfair Display", FontCategory.SERIF, R.font.qf_playfair, R.layout.widget_font_playfair, R.layout.widget_font_playfair_shadow),
-    PLAYFAIR_ITALIC("Playfair Italic", FontCategory.SERIF, R.font.qf_playfair_italic, R.layout.widget_font_playfair_italic, R.layout.widget_font_playfair_italic_shadow),
-    CORMORANT("Cormorant", FontCategory.SERIF, R.font.qf_cormorant, R.layout.widget_font_cormorant, R.layout.widget_font_cormorant_shadow),
-    CORMORANT_ITALIC("Cormorant Italic", FontCategory.SERIF, R.font.qf_cormorant_italic, R.layout.widget_font_cormorant_italic, R.layout.widget_font_cormorant_italic_shadow),
-    EB_GARAMOND("EB Garamond", FontCategory.SERIF, R.font.qf_eb_garamond, R.layout.widget_font_eb_garamond, R.layout.widget_font_eb_garamond_shadow),
-    LORA("Lora", FontCategory.SERIF, R.font.qf_lora, R.layout.widget_font_lora, R.layout.widget_font_lora_shadow),
-    LORA_ITALIC("Lora Italic", FontCategory.SERIF, R.font.qf_lora_italic, R.layout.widget_font_lora_italic, R.layout.widget_font_lora_italic_shadow),
-    LIBRE_BASKERVILLE("Libre Baskerville", FontCategory.SERIF, R.font.qf_libre_baskerville, R.layout.widget_font_libre_baskerville, R.layout.widget_font_libre_baskerville_shadow),
-    FRAUNCES("Fraunces", FontCategory.SERIF, R.font.qf_fraunces, R.layout.widget_font_fraunces, R.layout.widget_font_fraunces_shadow),
-    INSTRUMENT_SERIF("Instrument Serif", FontCategory.SERIF, R.font.qf_instrument_serif, R.layout.widget_font_instrument_serif, R.layout.widget_font_instrument_serif_shadow),
-    INSTRUMENT_ITALIC("Instrument Italic", FontCategory.SERIF, R.font.qf_instrument_italic, R.layout.widget_font_instrument_italic, R.layout.widget_font_instrument_italic_shadow),
-    DM_SERIF("DM Serif Display", FontCategory.SERIF, R.font.qf_dm_serif, R.layout.widget_font_dm_serif, R.layout.widget_font_dm_serif_shadow),
-    BODONI("Bodoni Moda", FontCategory.SERIF, R.font.qf_bodoni, R.layout.widget_font_bodoni, R.layout.widget_font_bodoni_shadow),
-    CRIMSON("Crimson Pro", FontCategory.SERIF, R.font.qf_crimson, R.layout.widget_font_crimson, R.layout.widget_font_crimson_shadow),
-    MANROPE("Manrope", FontCategory.SANS, R.font.qf_manrope, R.layout.widget_font_manrope, R.layout.widget_font_manrope_shadow),
-    OUTFIT("Outfit", FontCategory.SANS, R.font.qf_outfit, R.layout.widget_font_outfit, R.layout.widget_font_outfit_shadow),
-    SPACE_GROTESK("Space Grotesk", FontCategory.SANS, R.font.qf_space_grotesk, R.layout.widget_font_space_grotesk, R.layout.widget_font_space_grotesk_shadow),
-    JOSEFIN("Josefin Sans", FontCategory.SANS, R.font.qf_josefin, R.layout.widget_font_josefin, R.layout.widget_font_josefin_shadow),
-    POPPINS("Poppins", FontCategory.SANS, R.font.qf_poppins, R.layout.widget_font_poppins, R.layout.widget_font_poppins_shadow),
-    QUICKSAND("Quicksand", FontCategory.SANS, R.font.qf_quicksand, R.layout.widget_font_quicksand, R.layout.widget_font_quicksand_shadow),
-    SYNE("Syne", FontCategory.SANS, R.font.qf_syne, R.layout.widget_font_syne, R.layout.widget_font_syne_shadow),
-    CAVEAT("Caveat", FontCategory.HAND, R.font.qf_caveat, R.layout.widget_font_caveat, R.layout.widget_font_caveat_shadow),
-    DANCING_SCRIPT("Dancing Script", FontCategory.HAND, R.font.qf_dancing_script, R.layout.widget_font_dancing_script, R.layout.widget_font_dancing_script_shadow),
-    GREAT_VIBES("Great Vibes", FontCategory.HAND, R.font.qf_great_vibes, R.layout.widget_font_great_vibes, R.layout.widget_font_great_vibes_shadow),
-    SACRAMENTO("Sacramento", FontCategory.HAND, R.font.qf_sacramento, R.layout.widget_font_sacramento, R.layout.widget_font_sacramento_shadow),
-    HOMEMADE_APPLE("Homemade Apple", FontCategory.HAND, R.font.qf_homemade_apple, R.layout.widget_font_homemade_apple, R.layout.widget_font_homemade_apple_shadow),
-    PATRICK_HAND("Patrick Hand", FontCategory.HAND, R.font.qf_patrick_hand, R.layout.widget_font_patrick_hand, R.layout.widget_font_patrick_hand_shadow),
-    KALAM("Kalam", FontCategory.HAND, R.font.qf_kalam, R.layout.widget_font_kalam, R.layout.widget_font_kalam_shadow),
-    SPECIAL_ELITE("Special Elite", FontCategory.MONO, R.font.qf_special_elite, R.layout.widget_font_special_elite, R.layout.widget_font_special_elite_shadow),
-    COURIER_PRIME("Courier Prime", FontCategory.MONO, R.font.qf_courier_prime, R.layout.widget_font_courier_prime, R.layout.widget_font_courier_prime_shadow),
-    IBM_PLEX_MONO("IBM Plex Mono", FontCategory.MONO, R.font.qf_ibm_plex_mono, R.layout.widget_font_ibm_plex_mono, R.layout.widget_font_ibm_plex_mono_shadow),
-    JETBRAINS_MONO("JetBrains Mono", FontCategory.MONO, R.font.qf_jetbrains_mono, R.layout.widget_font_jetbrains_mono, R.layout.widget_font_jetbrains_mono_shadow),
-    ABRIL("Abril Fatface", FontCategory.DISPLAY, R.font.qf_abril, R.layout.widget_font_abril, R.layout.widget_font_abril_shadow),
-    BEBAS("Bebas Neue", FontCategory.DISPLAY, R.font.qf_bebas, R.layout.widget_font_bebas, R.layout.widget_font_bebas_shadow),
-    ALFA_SLAB("Alfa Slab One", FontCategory.DISPLAY, R.font.qf_alfa_slab, R.layout.widget_font_alfa_slab, R.layout.widget_font_alfa_slab_shadow),
-    RIGHTEOUS("Righteous", FontCategory.DISPLAY, R.font.qf_righteous, R.layout.widget_font_righteous, R.layout.widget_font_righteous_shadow);
-
-    fun layout(shadow: Boolean) = if (shadow) shadowLayout else plainLayout
+    THEME("Theme font", null, 0),
+    PLAYFAIR("Playfair Display", FontCategory.SERIF, R.font.qf_playfair),
+    PLAYFAIR_ITALIC("Playfair Italic", FontCategory.SERIF, R.font.qf_playfair_italic),
+    CORMORANT("Cormorant", FontCategory.SERIF, R.font.qf_cormorant),
+    CORMORANT_ITALIC("Cormorant Italic", FontCategory.SERIF, R.font.qf_cormorant_italic),
+    EB_GARAMOND("EB Garamond", FontCategory.SERIF, R.font.qf_eb_garamond),
+    LORA("Lora", FontCategory.SERIF, R.font.qf_lora),
+    LORA_ITALIC("Lora Italic", FontCategory.SERIF, R.font.qf_lora_italic),
+    LIBRE_BASKERVILLE("Libre Baskerville", FontCategory.SERIF, R.font.qf_libre_baskerville),
+    FRAUNCES("Fraunces", FontCategory.SERIF, R.font.qf_fraunces),
+    INSTRUMENT_SERIF("Instrument Serif", FontCategory.SERIF, R.font.qf_instrument_serif),
+    INSTRUMENT_ITALIC("Instrument Italic", FontCategory.SERIF, R.font.qf_instrument_italic),
+    DM_SERIF("DM Serif Display", FontCategory.SERIF, R.font.qf_dm_serif),
+    BODONI("Bodoni Moda", FontCategory.SERIF, R.font.qf_bodoni),
+    CRIMSON("Crimson Pro", FontCategory.SERIF, R.font.qf_crimson),
+    MANROPE("Manrope", FontCategory.SANS, R.font.qf_manrope),
+    OUTFIT("Outfit", FontCategory.SANS, R.font.qf_outfit),
+    SPACE_GROTESK("Space Grotesk", FontCategory.SANS, R.font.qf_space_grotesk),
+    JOSEFIN("Josefin Sans", FontCategory.SANS, R.font.qf_josefin),
+    POPPINS("Poppins", FontCategory.SANS, R.font.qf_poppins),
+    QUICKSAND("Quicksand", FontCategory.SANS, R.font.qf_quicksand),
+    SYNE("Syne", FontCategory.SANS, R.font.qf_syne),
+    CAVEAT("Caveat", FontCategory.HAND, R.font.qf_caveat),
+    DANCING_SCRIPT("Dancing Script", FontCategory.HAND, R.font.qf_dancing_script),
+    GREAT_VIBES("Great Vibes", FontCategory.HAND, R.font.qf_great_vibes),
+    SACRAMENTO("Sacramento", FontCategory.HAND, R.font.qf_sacramento),
+    HOMEMADE_APPLE("Homemade Apple", FontCategory.HAND, R.font.qf_homemade_apple),
+    PATRICK_HAND("Patrick Hand", FontCategory.HAND, R.font.qf_patrick_hand),
+    KALAM("Kalam", FontCategory.HAND, R.font.qf_kalam),
+    SPECIAL_ELITE("Special Elite", FontCategory.MONO, R.font.qf_special_elite),
+    COURIER_PRIME("Courier Prime", FontCategory.MONO, R.font.qf_courier_prime),
+    IBM_PLEX_MONO("IBM Plex Mono", FontCategory.MONO, R.font.qf_ibm_plex_mono),
+    JETBRAINS_MONO("JetBrains Mono", FontCategory.MONO, R.font.qf_jetbrains_mono),
+    ABRIL("Abril Fatface", FontCategory.DISPLAY, R.font.qf_abril),
+    BEBAS("Bebas Neue", FontCategory.DISPLAY, R.font.qf_bebas),
+    ALFA_SLAB("Alfa Slab One", FontCategory.DISPLAY, R.font.qf_alfa_slab),
+    RIGHTEOUS("Righteous", FontCategory.DISPLAY, R.font.qf_righteous);
 
     /**
      * The bundled typeface, loaded once per process. Null for [THEME], and also null if the font

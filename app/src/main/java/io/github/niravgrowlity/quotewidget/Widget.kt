@@ -9,6 +9,9 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
@@ -96,15 +99,19 @@ object Rotation {
 
 /** Feeds the single long-quote item to the scrollable list on Android 8–11. */
 class QuoteListService : RemoteViewsService() {
-    override fun onGetViewFactory(intent: Intent): RemoteViewsFactory = Factory(applicationContext)
+    override fun onGetViewFactory(intent: Intent): RemoteViewsFactory =
+        Factory(applicationContext, intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, 0))
 
-    private class Factory(private val ctx: Context) : RemoteViewsFactory {
+    private class Factory(private val ctx: Context, private val widgetId: Int) : RemoteViewsFactory {
         override fun onCreate() = Unit
         override fun onDataSetChanged() = Unit
         override fun onDestroy() = Unit
         override fun getCount() = if (QuoteStore.current(ctx) != null) 1 else 0
         override fun getViewAt(position: Int): RemoteViews =
-            WidgetRenderer.scrollItem(ctx, WidgetRenderer.scrollText(QuoteStore.current(ctx)?.text ?: ""))
+            WidgetRenderer.scrollItem(
+                ctx, WidgetRenderer.scrollText(QuoteStore.current(ctx)?.text ?: ""),
+                WidgetRenderer.sizeDp(ctx, AppWidgetManager.getInstance(ctx), widgetId).first,
+            )
         override fun getLoadingView(): RemoteViews? = null
         override fun getViewTypeCount() = WidgetRenderer.ITEM_VIEW_TYPES
         override fun getItemId(position: Int) = position.toLong()
@@ -123,6 +130,13 @@ object WidgetRenderer {
     const val ITEM_VIEW_TYPES = WidgetStyle.ITEM_VIEW_TYPES
     /** Author line: 8dp gap + one line of ~12sp text. */
     private const val AUTHOR_DP = 26f
+    /** Scroll-list item end padding (gen_widget_res.py ITEM). */
+    private const val ITEM_END_DP = 8f
+    /** Room around library-font text (fraction of text size) so swashes and accents aren't clipped. */
+    private const val INSET_X = 0.06f
+    private const val INSET_Y = 0.12f
+    /** Largest quote image we'll make; about 4.5 MB as a mask. Longer quotes use a TextView. */
+    private const val MAX_TEXT_PIXELS = 4_500_000L
 
     /** Text for the scroll-mode list: the quote with its author underneath. */
     fun scrollText(raw: String): String {
@@ -141,13 +155,19 @@ object WidgetRenderer {
     }
 
     /** Each widget is rendered for its own size, so two widgets of different sizes both fit. */
-    fun update(ctx: Context, mgr: AppWidgetManager, id: Int) {
+    /** The widget's size in dp as the launcher reports it. */
+    fun sizeDp(ctx: Context, mgr: AppWidgetManager, id: Int): Pair<Int, Int> {
         val o = mgr.getAppWidgetOptions(id)
         val portrait = ctx.resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE
         // Launchers report: portrait = minWidth x maxHeight, landscape = maxWidth x minHeight.
         val w = o.getInt(if (portrait) AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH else AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH)
         val h = o.getInt(if (portrait) AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT else AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
-        mgr.updateAppWidget(id, build(ctx, w.takeIf { it > 0 } ?: 250, h.takeIf { it > 0 } ?: 110, id))
+        return (w.takeIf { it > 0 } ?: 250) to (h.takeIf { it > 0 } ?: 110)
+    }
+
+    fun update(ctx: Context, mgr: AppWidgetManager, id: Int) {
+        val (w, h) = sizeDp(ctx, mgr, id)
+        mgr.updateAppWidget(id, build(ctx, w, h, id))
         if (Build.VERSION.SDK_INT < 31) {
             @Suppress("DEPRECATION")
             mgr.notifyAppWidgetViewDataChanged(id, R.id.widget_list)
@@ -155,40 +175,69 @@ object WidgetRenderer {
     }
 
     /**
-     * The quote text in a library font: that font's one-TextView layout, coloured like the
-     * theme. On Android 12+ the colour is passed as a resource, so the launcher resolves it and
-     * wallpaper colours and day/night switches still apply.
+     * Draws [text] in a library font, because launchers can't load an app's own fonts. Most
+     * styles get an alpha mask (1 byte per pixel) that the layout's android:tint colours with the
+     * theme's text colour; the launcher resolves that colour, so wallpaper colours and day/night
+     * switching still apply. Shadow styles get white text with the same shadow their TextViews
+     * use. Returns null if the image would be unreasonably large; callers then use a TextView.
      */
-    private fun fontText(ctx: Context, font: QuoteFont, style: WidgetStyle, text: CharSequence, sp: Float, gravity: Int): RemoteViews {
-        val v = RemoteViews(ctx.packageName, font.layout(style.shadow))
-        v.setTextViewText(R.id.font_text, text)
-        v.setTextViewTextSize(R.id.font_text, TypedValue.COMPLEX_UNIT_SP, sp)
-        v.setInt(R.id.font_text, "setGravity", gravity)
-        val color = style.textColor(QuoteStore.themeMode(ctx))
-        if (Build.VERSION.SDK_INT >= 31) {
-            v.setColorStateList(R.id.font_text, "setTextColor", color)
-        } else {
-            v.setTextColor(R.id.font_text, ctx.getColor(color))
+    private fun textBitmap(
+        ctx: Context, text: CharSequence, face: Typeface, sp: Float, widthDp: Float, gravity: Int, style: WidgetStyle,
+    ): Bitmap? {
+        val dm = ctx.resources.displayMetrics
+        val widthPx = (widthDp * dm.density).toInt()
+        val size = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, dm)
+        val paint = TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
+            typeface = face
+            textSize = size
+            color = Color.WHITE
+            if (style.shadow) setShadowLayer(8f, 0f, 1f, 0xB3000000.toInt())
         }
-        return v
+        val padX = (size * INSET_X).toInt()
+        val padY = (size * INSET_Y).toInt()
+        if (widthPx - 2 * padX <= 0) return null
+        val align = if (gravity == Gravity.CENTER_HORIZONTAL) Layout.Alignment.ALIGN_CENTER else Layout.Alignment.ALIGN_NORMAL
+        val layout = textLayout(text, paint, widthPx - 2 * padX, align)
+        val heightPx = layout.height + 2 * padY
+        if (heightPx <= 0 || widthPx.toLong() * heightPx > MAX_TEXT_PIXELS) return null
+        val bmp = Bitmap.createBitmap(widthPx, heightPx, if (style.shadow) Bitmap.Config.ARGB_8888 else Bitmap.Config.ALPHA_8)
+        bmp.density = dm.densityDpi
+        Canvas(bmp).apply {
+            translate(padX.toFloat(), padY.toFloat())
+            layout.draw(this)
+        }
+        return bmp
     }
 
-    /** The quote as one item in the scrollable list. Tapping it still goes to the next quote. */
-    fun scrollItem(ctx: Context, text: String, style: WidgetStyle = QuoteStore.style(ctx)): RemoteViews {
+    private fun textLayout(text: CharSequence, paint: TextPaint, widthPx: Int, align: Layout.Alignment) =
+        StaticLayout.Builder.obtain(text, 0, text.length, paint, widthPx)
+            .setAlignment(align)
+            .setLineSpacing(0f, LINE_SPACING)
+            .setIncludePad(true)
+            .build()
+
+    /**
+     * The quote as one item in the scrollable list. Tapping it still goes to the next quote.
+     * [widgetWidthDp] is the whole widget's width, used to draw library fonts at the right size.
+     */
+    fun scrollItem(ctx: Context, text: String, widgetWidthDp: Int, style: WidgetStyle = QuoteStore.style(ctx)): RemoteViews {
         val gravity = if (!style.leftAligned && QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER_HORIZONTAL else Gravity.START
-        val font = QuoteStore.font(ctx)
-        if (font != QuoteFont.THEME) {
-            val px = { dp: Float -> (dp * ctx.resources.displayMetrics.density).toInt() }
-            val item = fontText(ctx, font, style, text, READABLE_SP, gravity)
-            item.setViewPadding(R.id.font_text, 0, 0, px(8f), px(4f))
-            item.setOnClickFillInIntent(R.id.font_text, Intent())
+        val item = RemoteViews(ctx.packageName, style.item(QuoteStore.themeMode(ctx)))
+        item.setOnClickFillInIntent(R.id.widget_item, Intent())
+        val face = QuoteStore.font(ctx).typeface(ctx)
+        val bmp = face?.let {
+            textBitmap(ctx, text, it, READABLE_SP, widgetWidthDp - 2 * PADDING_DP - style.startDp - ITEM_END_DP, gravity, style)
+        }
+        if (bmp != null) {
+            item.setViewVisibility(R.id.widget_item_text, View.GONE)
+            item.setImageViewBitmap(R.id.widget_item_img, bmp)
+            item.setContentDescription(R.id.widget_item_img, text)
+            item.setViewVisibility(R.id.widget_item_img, View.VISIBLE)
             return item
         }
-        val item = RemoteViews(ctx.packageName, style.item(QuoteStore.themeMode(ctx)))
         item.setTextViewText(R.id.widget_item_text, text)
         item.setTextViewTextSize(R.id.widget_item_text, TypedValue.COMPLEX_UNIT_SP, READABLE_SP)
         item.setInt(R.id.widget_item_text, "setGravity", gravity)
-        item.setOnClickFillInIntent(R.id.widget_item_text, Intent())
         return item
     }
 
@@ -228,11 +277,13 @@ object WidgetRenderer {
         val metaWanted = sampleText == null && (QuoteStore.showCounter(ctx) || pinned)
         val maxSp = (MAX_SP * QuoteStore.textSize(ctx).scale).coerceAtLeast(READABLE_SP)
         val font = QuoteStore.font(ctx)
+        val face = font.typeface(ctx)
+        val textWidthDp = widthDp - 2 * PADDING_DP - style.startDp
         val fitted = fitTextSize(
             ctx, body,
-            widthDp - 2 * PADDING_DP - style.startDp,
+            textWidthDp,
             heightDp - 2 * PADDING_DP - (if (metaWanted) META_DP else 0f) - (if (author != null) AUTHOR_DP else 0f),
-            maxSp, font.typeface(ctx) ?: style.typeface(),
+            maxSp, face ?: style.typeface(), inset = face != null,
         )
         val scrolling = fitted == null && interactive
         val hGravity = if (!style.leftAligned && QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER_HORIZONTAL else Gravity.START
@@ -241,15 +292,16 @@ object WidgetRenderer {
             val sp = fitted ?: READABLE_SP
             rv.setViewVisibility(R.id.widget_list, View.GONE)
             rv.setViewVisibility(R.id.widget_body, View.VISIBLE)
-            if (font == QuoteFont.THEME) {
+            val bmp = face?.let { textBitmap(ctx, body, it, sp, textWidthDp, hGravity, style) }
+            if (bmp != null) {
+                rv.setViewVisibility(R.id.widget_text, View.GONE)
+                rv.setImageViewBitmap(R.id.widget_text_img, bmp)
+                rv.setContentDescription(R.id.widget_text_img, body)
+                rv.setViewVisibility(R.id.widget_text_img, View.VISIBLE)
+            } else {
                 rv.setTextViewText(R.id.widget_text, body)
                 rv.setTextViewTextSize(R.id.widget_text, TypedValue.COMPLEX_UNIT_SP, sp)
                 rv.setInt(R.id.widget_text, "setGravity", hGravity)
-            } else {
-                rv.setViewVisibility(R.id.widget_text, View.GONE)
-                rv.removeAllViews(R.id.widget_text_slot)
-                rv.addView(R.id.widget_text_slot, fontText(ctx, font, style, body, sp, hGravity))
-                rv.setViewVisibility(R.id.widget_text_slot, View.VISIBLE)
             }
             if (author != null) {
                 rv.setTextViewText(R.id.widget_author, "\u2014 $author")
@@ -268,7 +320,7 @@ object WidgetRenderer {
                 rv.setRemoteAdapter(
                     R.id.widget_list,
                     RemoteViews.RemoteCollectionItems.Builder()
-                        .addItem(q.id, scrollItem(ctx, scrollText(q.text), style))
+                        .addItem(q.id, scrollItem(ctx, scrollText(q.text), widthDp, style))
                         .setViewTypeCount(ITEM_VIEW_TYPES)
                         .build(),
                 )
@@ -312,7 +364,9 @@ object WidgetRenderer {
      * search with the same line-breaking the TextView uses. Returns null if it doesn't fit even
      * at READABLE_SP (then the widget scrolls). Runs only when a widget redraws.
      */
-    private fun fitTextSize(ctx: Context, text: String, wDp: Float, hDp: Float, maxSp: Float, face: Typeface): Float? {
+    private fun fitTextSize(
+        ctx: Context, text: String, wDp: Float, hDp: Float, maxSp: Float, face: Typeface, inset: Boolean = false,
+    ): Float? {
         val dm = ctx.resources.displayMetrics
         val widthPx = (wDp * dm.density).toInt()
         // 5% safety margin: launcher fonts can differ slightly from ours.
@@ -321,12 +375,12 @@ object WidgetRenderer {
         val paint = TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply { typeface = face }
         fun fits(sp: Float): Boolean {
             paint.textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, dm)
-            val layout = StaticLayout.Builder.obtain(text, 0, text.length, paint, widthPx)
-                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                .setLineSpacing(0f, LINE_SPACING)
-                .setIncludePad(true)
-                .build()
-            return layout.height <= heightPx
+            // Library fonts are drawn with a small margin (see textBitmap); measure the same way.
+            val padX = if (inset) (paint.textSize * INSET_X).toInt() else 0
+            val padY = if (inset) (paint.textSize * INSET_Y).toInt() else 0
+            if (widthPx - 2 * padX <= 0) return false
+            val layout = textLayout(text, paint, widthPx - 2 * padX, Layout.Alignment.ALIGN_NORMAL)
+            return layout.height + 2 * padY <= heightPx
         }
         if (!fits(READABLE_SP)) return null
         var lo = READABLE_SP

@@ -40,7 +40,7 @@ The app is built so it does almost nothing in the background:
 - **One timer, only while a widget exists.** If no widget is on the home screen, no timer is set at all.
 - **The shortest rotation is 15 minutes**, the same minimum Android uses for its own background jobs.
 - **Nothing keeps running.** There are no background services, wake locks or polling. Each quote change takes a few milliseconds, after which Android can close the app completely.
-- **It only uses the network in the foreground.** The update check runs only while the app is open, at most once a day, or when you tap **Check for updates**. The widget never uses the network.
+- **It only uses the network in the foreground.** The update check runs only when you open the app (at most once every 10 minutes) or tap **Check now**. If a newer version exists, a popup offers to install it. The widget never uses the network.
 
 ## How releases work
 
@@ -57,7 +57,7 @@ Widget layouts, colours and fonts are generated, so don't edit the output by han
 - **Themes:** edit `tools/gen_widget_res.py`, then run `python tools/gen_widget_res.py`. It rewrites `res/layout/widget_*`, `res/drawable/wbg_*`, the colour files, `WidgetStyle.kt` and `QuoteFont.kt`.
 - **Fonts:** edit the list in `tools/fonts.py`, run `python tools/fetch_fonts.py` (it needs `pip install fonttools`), then run the generator.
 
-Home-screen widgets can only use a font that a layout names in XML. So each font gets a one-line text layout, and the app places it inside the themed widget at runtime.
+Launchers can't load an app's own fonts. So when a library font is chosen, the widget draws the quote as an image in that font. The layout tints the image with the theme's text colour, so wallpaper colours and light/dark still apply.
 
 ## Credits
 
