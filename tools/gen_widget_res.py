@@ -328,7 +328,8 @@ for t in THEMES:
     enum_rows.append(
         f'    {t["enum"]}(\n'
         f'        "{t["label"]}", wallpaper = {str(bool(t.get("wallpaper"))).lower()}, '
-        f'family = "{t["font"]}", bold = {str(bold).lower()}, startDp = {start}f,\n'
+        f'family = "{t["font"]}", bold = {str(bold).lower()}, startDp = {start}f, '
+        f'leftAligned = {str(deco in ("mark", "stripe")).lower()},\n'
         f'        layouts = intArrayOf({", ".join(main_ids)}),\n'
         f'        items = intArrayOf({", ".join(item_ids)}),\n'
         f'    )'
@@ -351,6 +352,8 @@ enum class WidgetStyle(
     val family: String,
     val bold: Boolean,
     val startDp: Float,
+    /** Styles designed around a left edge (quote mark, stripe) always align left. */
+    val leftAligned: Boolean,
     private val layouts: IntArray,
     private val items: IntArray,
 ) {{

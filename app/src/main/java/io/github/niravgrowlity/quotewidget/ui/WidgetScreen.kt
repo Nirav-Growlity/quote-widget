@@ -141,9 +141,17 @@ fun WidgetScreen(state: AppState, padding: PaddingValues) {
             }
         }
         Setting("Alignment") {
-            Segmented(Align.entries, QuoteStore.align(ctx), { it.label }) {
-                QuoteStore.setAlign(ctx, it)
-                state.changed()
+            if (style.leftAligned) {
+                Text(
+                    "${style.label} is designed around its left edge, so it always aligns left.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                Segmented(Align.entries, QuoteStore.align(ctx), { it.label }) {
+                    QuoteStore.setAlign(ctx, it)
+                    state.changed()
+                }
             }
         }
         SwitchRow("Show position", "Adds “3 of 12” in the corner", QuoteStore.showCounter(ctx)) {

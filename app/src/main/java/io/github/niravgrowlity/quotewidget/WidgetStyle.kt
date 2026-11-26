@@ -15,81 +15,83 @@ enum class WidgetStyle(
     val family: String,
     val bold: Boolean,
     val startDp: Float,
+    /** Styles designed around a left edge (quote mark, stripe) always align left. */
+    val leftAligned: Boolean,
     private val layouts: IntArray,
     private val items: IntArray,
 ) {
     EDITORIAL(
-        "Editorial", wallpaper = true, family = "serif", bold = false, startDp = 30f,
+        "Editorial", wallpaper = true, family = "serif", bold = false, startDp = 30f, leftAligned = true,
         layouts = intArrayOf(R.layout.widget_editorial, R.layout.widget_editorial_light, R.layout.widget_editorial_dark),
         items = intArrayOf(R.layout.widget_item_editorial, R.layout.widget_item_editorial_light, R.layout.widget_item_editorial_dark),
     ),
     TONAL(
-        "Tonal", wallpaper = true, family = "sans-serif-medium", bold = false, startDp = 18f,
+        "Tonal", wallpaper = true, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true,
         layouts = intArrayOf(R.layout.widget_tonal, R.layout.widget_tonal_light, R.layout.widget_tonal_dark),
         items = intArrayOf(R.layout.widget_item_tonal, R.layout.widget_item_tonal_light, R.layout.widget_item_tonal_dark),
     ),
     BOLD(
-        "Bold", wallpaper = true, family = "sans-serif", bold = true, startDp = 0f,
+        "Bold", wallpaper = true, family = "sans-serif", bold = true, startDp = 0f, leftAligned = false,
         layouts = intArrayOf(R.layout.widget_bold, R.layout.widget_bold_light, R.layout.widget_bold_dark),
         items = intArrayOf(R.layout.widget_item_bold, R.layout.widget_item_bold_light, R.layout.widget_item_bold_dark),
     ),
     GRADIENT(
-        "Gradient", wallpaper = true, family = "sans-serif-medium", bold = false, startDp = 0f,
+        "Gradient", wallpaper = true, family = "sans-serif-medium", bold = false, startDp = 0f, leftAligned = false,
         layouts = intArrayOf(R.layout.widget_gradient, R.layout.widget_gradient_light, R.layout.widget_gradient_dark),
         items = intArrayOf(R.layout.widget_item_gradient, R.layout.widget_item_gradient_light, R.layout.widget_item_gradient_dark),
     ),
     CLEAR(
-        "No background", wallpaper = true, family = "sans-serif-medium", bold = false, startDp = 0f,
+        "No background", wallpaper = true, family = "sans-serif-medium", bold = false, startDp = 0f, leftAligned = false,
         layouts = intArrayOf(R.layout.widget_clear, R.layout.widget_clear_light, R.layout.widget_clear_dark),
         items = intArrayOf(R.layout.widget_item_clear, R.layout.widget_item_clear_light, R.layout.widget_item_clear_dark),
     ),
     SUNSET(
-        "Sunset", wallpaper = false, family = "serif", bold = false, startDp = 0f,
+        "Sunset", wallpaper = false, family = "serif", bold = false, startDp = 0f, leftAligned = false,
         layouts = intArrayOf(R.layout.widget_sunset, R.layout.widget_sunset, R.layout.widget_sunset),
         items = intArrayOf(R.layout.widget_item_sunset, R.layout.widget_item_sunset, R.layout.widget_item_sunset),
     ),
     LAGOON(
-        "Lagoon", wallpaper = false, family = "sans-serif-medium", bold = false, startDp = 0f,
+        "Lagoon", wallpaper = false, family = "sans-serif-medium", bold = false, startDp = 0f, leftAligned = false,
         layouts = intArrayOf(R.layout.widget_lagoon, R.layout.widget_lagoon, R.layout.widget_lagoon),
         items = intArrayOf(R.layout.widget_item_lagoon, R.layout.widget_item_lagoon, R.layout.widget_item_lagoon),
     ),
     PASTEL(
-        "Pastel", wallpaper = false, family = "serif", bold = false, startDp = 30f,
+        "Pastel", wallpaper = false, family = "serif", bold = false, startDp = 30f, leftAligned = true,
         layouts = intArrayOf(R.layout.widget_pastel, R.layout.widget_pastel, R.layout.widget_pastel),
         items = intArrayOf(R.layout.widget_item_pastel, R.layout.widget_item_pastel, R.layout.widget_item_pastel),
     ),
     ULTRAVIOLET(
-        "Ultraviolet", wallpaper = false, family = "sans-serif", bold = true, startDp = 0f,
+        "Ultraviolet", wallpaper = false, family = "sans-serif", bold = true, startDp = 0f, leftAligned = false,
         layouts = intArrayOf(R.layout.widget_ultraviolet, R.layout.widget_ultraviolet, R.layout.widget_ultraviolet),
         items = intArrayOf(R.layout.widget_item_ultraviolet, R.layout.widget_item_ultraviolet, R.layout.widget_item_ultraviolet),
     ),
     MATCHA(
-        "Matcha", wallpaper = false, family = "serif", bold = false, startDp = 30f,
+        "Matcha", wallpaper = false, family = "serif", bold = false, startDp = 30f, leftAligned = true,
         layouts = intArrayOf(R.layout.widget_matcha, R.layout.widget_matcha, R.layout.widget_matcha),
         items = intArrayOf(R.layout.widget_item_matcha, R.layout.widget_item_matcha, R.layout.widget_item_matcha),
     ),
     LILAC(
-        "Lilac", wallpaper = false, family = "sans-serif-medium", bold = false, startDp = 18f,
+        "Lilac", wallpaper = false, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true,
         layouts = intArrayOf(R.layout.widget_lilac, R.layout.widget_lilac, R.layout.widget_lilac),
         items = intArrayOf(R.layout.widget_item_lilac, R.layout.widget_item_lilac, R.layout.widget_item_lilac),
     ),
     APRICOT(
-        "Apricot", wallpaper = false, family = "serif", bold = false, startDp = 18f,
+        "Apricot", wallpaper = false, family = "serif", bold = false, startDp = 18f, leftAligned = true,
         layouts = intArrayOf(R.layout.widget_apricot, R.layout.widget_apricot, R.layout.widget_apricot),
         items = intArrayOf(R.layout.widget_item_apricot, R.layout.widget_item_apricot, R.layout.widget_item_apricot),
     ),
     CITRUS(
-        "Citrus", wallpaper = false, family = "sans-serif-medium", bold = false, startDp = 0f,
+        "Citrus", wallpaper = false, family = "sans-serif-medium", bold = false, startDp = 0f, leftAligned = false,
         layouts = intArrayOf(R.layout.widget_citrus, R.layout.widget_citrus, R.layout.widget_citrus),
         items = intArrayOf(R.layout.widget_item_citrus, R.layout.widget_item_citrus, R.layout.widget_item_citrus),
     ),
     MIDNIGHT(
-        "Midnight", wallpaper = false, family = "serif", bold = false, startDp = 30f,
+        "Midnight", wallpaper = false, family = "serif", bold = false, startDp = 30f, leftAligned = true,
         layouts = intArrayOf(R.layout.widget_midnight, R.layout.widget_midnight, R.layout.widget_midnight),
         items = intArrayOf(R.layout.widget_item_midnight, R.layout.widget_item_midnight, R.layout.widget_item_midnight),
     ),
     MONO(
-        "Mono", wallpaper = false, family = "monospace", bold = false, startDp = 0f,
+        "Mono", wallpaper = false, family = "monospace", bold = false, startDp = 0f, leftAligned = false,
         layouts = intArrayOf(R.layout.widget_mono, R.layout.widget_mono, R.layout.widget_mono),
         items = intArrayOf(R.layout.widget_item_mono, R.layout.widget_item_mono, R.layout.widget_item_mono),
     );

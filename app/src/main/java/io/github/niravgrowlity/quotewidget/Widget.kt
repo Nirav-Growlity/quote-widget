@@ -161,7 +161,7 @@ object WidgetRenderer {
         item.setTextViewTextSize(R.id.widget_item_text, TypedValue.COMPLEX_UNIT_SP, READABLE_SP)
         item.setInt(
             R.id.widget_item_text, "setGravity",
-            if (QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER_HORIZONTAL else Gravity.START,
+            if (!style.leftAligned && QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER_HORIZONTAL else Gravity.START,
         )
         item.setOnClickFillInIntent(R.id.widget_item_text, Intent())
         return item
@@ -209,7 +209,7 @@ object WidgetRenderer {
             maxSp, style.typeface(),
         )
         val scrolling = fitted == null && interactive
-        val hGravity = if (QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER_HORIZONTAL else Gravity.START
+        val hGravity = if (!style.leftAligned && QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER_HORIZONTAL else Gravity.START
 
         if (!scrolling) {
             val sp = fitted ?: READABLE_SP
