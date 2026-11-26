@@ -9,6 +9,7 @@ enum class StyleGroup(val title: String) {
     PALETTE("Classic palettes"),
     ORIGINAL("Originals"),
     WALLPAPER("Match my wallpaper"),
+    PHOTO("Your photo"),
 }
 
 /**
@@ -29,143 +30,150 @@ enum class WidgetStyle(
      * white with a shadow; otherwise it's drawn as a mask that the layout tints.
      */
     val shadow: Boolean,
+    /** Background is the user's photo (PhotoBackground); text colours are set at runtime. */
+    val photo: Boolean,
     private val layouts: IntArray,
     private val items: IntArray,
 ) {
     EDITORIAL(
-        "Editorial", StyleGroup.WALLPAPER, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false,
+        "Editorial", StyleGroup.WALLPAPER, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_editorial, R.layout.widget_editorial_light, R.layout.widget_editorial_dark),
         items = intArrayOf(R.layout.widget_item_editorial, R.layout.widget_item_editorial_light, R.layout.widget_item_editorial_dark),
     ),
     TONAL(
-        "Tonal", StyleGroup.WALLPAPER, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false,
+        "Tonal", StyleGroup.WALLPAPER, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_tonal, R.layout.widget_tonal_light, R.layout.widget_tonal_dark),
         items = intArrayOf(R.layout.widget_item_tonal, R.layout.widget_item_tonal_light, R.layout.widget_item_tonal_dark),
     ),
     BOLD(
-        "Bold", StyleGroup.WALLPAPER, family = "sans-serif", bold = true, startDp = 0f, leftAligned = false, shadow = false,
+        "Bold", StyleGroup.WALLPAPER, family = "sans-serif", bold = true, startDp = 0f, leftAligned = false, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_bold, R.layout.widget_bold_light, R.layout.widget_bold_dark),
         items = intArrayOf(R.layout.widget_item_bold, R.layout.widget_item_bold_light, R.layout.widget_item_bold_dark),
     ),
     CLEAR(
-        "No background", StyleGroup.WALLPAPER, family = "sans-serif-medium", bold = false, startDp = 0f, leftAligned = false, shadow = true,
+        "No background", StyleGroup.WALLPAPER, family = "sans-serif-medium", bold = false, startDp = 0f, leftAligned = false, shadow = true, photo = false,
         layouts = intArrayOf(R.layout.widget_clear, R.layout.widget_clear_light, R.layout.widget_clear_dark),
         items = intArrayOf(R.layout.widget_item_clear, R.layout.widget_item_clear_light, R.layout.widget_item_clear_dark),
     ),
     CATPPUCCIN_LATTE(
-        "Catppuccin Latte", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 30f, leftAligned = true, shadow = false,
+        "Catppuccin Latte", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_catppuccin_latte, R.layout.widget_catppuccin_latte, R.layout.widget_catppuccin_latte),
         items = intArrayOf(R.layout.widget_item_catppuccin_latte, R.layout.widget_item_catppuccin_latte, R.layout.widget_item_catppuccin_latte),
     ),
     CATPPUCCIN_MOCHA(
-        "Catppuccin Mocha", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 30f, leftAligned = true, shadow = false,
+        "Catppuccin Mocha", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_catppuccin_mocha, R.layout.widget_catppuccin_mocha, R.layout.widget_catppuccin_mocha),
         items = intArrayOf(R.layout.widget_item_catppuccin_mocha, R.layout.widget_item_catppuccin_mocha, R.layout.widget_item_catppuccin_mocha),
     ),
     ROSE_PINE(
-        "Rosé Pine", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false,
+        "Rosé Pine", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_rose_pine, R.layout.widget_rose_pine, R.layout.widget_rose_pine),
         items = intArrayOf(R.layout.widget_item_rose_pine, R.layout.widget_item_rose_pine, R.layout.widget_item_rose_pine),
     ),
     ROSE_PINE_DAWN(
-        "Rosé Pine Dawn", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false,
+        "Rosé Pine Dawn", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_rose_pine_dawn, R.layout.widget_rose_pine_dawn, R.layout.widget_rose_pine_dawn),
         items = intArrayOf(R.layout.widget_item_rose_pine_dawn, R.layout.widget_item_rose_pine_dawn, R.layout.widget_item_rose_pine_dawn),
     ),
     NORD(
-        "Nord", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false,
+        "Nord", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_nord, R.layout.widget_nord, R.layout.widget_nord),
         items = intArrayOf(R.layout.widget_item_nord, R.layout.widget_item_nord, R.layout.widget_item_nord),
     ),
     NORD_SNOW(
-        "Nord Snow", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false,
+        "Nord Snow", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_nord_snow, R.layout.widget_nord_snow, R.layout.widget_nord_snow),
         items = intArrayOf(R.layout.widget_item_nord_snow, R.layout.widget_item_nord_snow, R.layout.widget_item_nord_snow),
     ),
     GRUVBOX(
-        "Gruvbox", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false,
+        "Gruvbox", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_gruvbox, R.layout.widget_gruvbox, R.layout.widget_gruvbox),
         items = intArrayOf(R.layout.widget_item_gruvbox, R.layout.widget_item_gruvbox, R.layout.widget_item_gruvbox),
     ),
     GRUVBOX_LIGHT(
-        "Gruvbox Light", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false,
+        "Gruvbox Light", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_gruvbox_light, R.layout.widget_gruvbox_light, R.layout.widget_gruvbox_light),
         items = intArrayOf(R.layout.widget_item_gruvbox_light, R.layout.widget_item_gruvbox_light, R.layout.widget_item_gruvbox_light),
     ),
     DRACULA(
-        "Dracula", StyleGroup.PALETTE, family = "monospace", bold = false, startDp = 0f, leftAligned = false, shadow = false,
+        "Dracula", StyleGroup.PALETTE, family = "monospace", bold = false, startDp = 0f, leftAligned = false, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_dracula, R.layout.widget_dracula, R.layout.widget_dracula),
         items = intArrayOf(R.layout.widget_item_dracula, R.layout.widget_item_dracula, R.layout.widget_item_dracula),
     ),
     SOLARIZED_LIGHT(
-        "Solarized Light", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false,
+        "Solarized Light", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_solarized_light, R.layout.widget_solarized_light, R.layout.widget_solarized_light),
         items = intArrayOf(R.layout.widget_item_solarized_light, R.layout.widget_item_solarized_light, R.layout.widget_item_solarized_light),
     ),
     SOLARIZED_DARK(
-        "Solarized Dark", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false,
+        "Solarized Dark", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_solarized_dark, R.layout.widget_solarized_dark, R.layout.widget_solarized_dark),
         items = intArrayOf(R.layout.widget_item_solarized_dark, R.layout.widget_item_solarized_dark, R.layout.widget_item_solarized_dark),
     ),
     TOKYO_NIGHT(
-        "Tokyo Night", StyleGroup.PALETTE, family = "monospace", bold = false, startDp = 0f, leftAligned = false, shadow = false,
+        "Tokyo Night", StyleGroup.PALETTE, family = "monospace", bold = false, startDp = 0f, leftAligned = false, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_tokyo_night, R.layout.widget_tokyo_night, R.layout.widget_tokyo_night),
         items = intArrayOf(R.layout.widget_item_tokyo_night, R.layout.widget_item_tokyo_night, R.layout.widget_item_tokyo_night),
     ),
     EVERFOREST(
-        "Everforest", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false,
+        "Everforest", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_everforest, R.layout.widget_everforest, R.layout.widget_everforest),
         items = intArrayOf(R.layout.widget_item_everforest, R.layout.widget_item_everforest, R.layout.widget_item_everforest),
     ),
     EVERFOREST_LIGHT(
-        "Everforest Light", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false,
+        "Everforest Light", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_everforest_light, R.layout.widget_everforest_light, R.layout.widget_everforest_light),
         items = intArrayOf(R.layout.widget_item_everforest_light, R.layout.widget_item_everforest_light, R.layout.widget_item_everforest_light),
     ),
     KANAGAWA(
-        "Kanagawa", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false,
+        "Kanagawa", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_kanagawa, R.layout.widget_kanagawa, R.layout.widget_kanagawa),
         items = intArrayOf(R.layout.widget_item_kanagawa, R.layout.widget_item_kanagawa, R.layout.widget_item_kanagawa),
     ),
     KANAGAWA_LOTUS(
-        "Kanagawa Lotus", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false,
+        "Kanagawa Lotus", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_kanagawa_lotus, R.layout.widget_kanagawa_lotus, R.layout.widget_kanagawa_lotus),
         items = intArrayOf(R.layout.widget_item_kanagawa_lotus, R.layout.widget_item_kanagawa_lotus, R.layout.widget_item_kanagawa_lotus),
     ),
     ONE_DARK(
-        "One Dark", StyleGroup.PALETTE, family = "monospace", bold = false, startDp = 0f, leftAligned = false, shadow = false,
+        "One Dark", StyleGroup.PALETTE, family = "monospace", bold = false, startDp = 0f, leftAligned = false, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_one_dark, R.layout.widget_one_dark, R.layout.widget_one_dark),
         items = intArrayOf(R.layout.widget_item_one_dark, R.layout.widget_item_one_dark, R.layout.widget_item_one_dark),
     ),
     MATCHA(
-        "Matcha", StyleGroup.ORIGINAL, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false,
+        "Matcha", StyleGroup.ORIGINAL, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_matcha, R.layout.widget_matcha, R.layout.widget_matcha),
         items = intArrayOf(R.layout.widget_item_matcha, R.layout.widget_item_matcha, R.layout.widget_item_matcha),
     ),
     LILAC(
-        "Lilac", StyleGroup.ORIGINAL, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false,
+        "Lilac", StyleGroup.ORIGINAL, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_lilac, R.layout.widget_lilac, R.layout.widget_lilac),
         items = intArrayOf(R.layout.widget_item_lilac, R.layout.widget_item_lilac, R.layout.widget_item_lilac),
     ),
     APRICOT(
-        "Apricot", StyleGroup.ORIGINAL, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false,
+        "Apricot", StyleGroup.ORIGINAL, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_apricot, R.layout.widget_apricot, R.layout.widget_apricot),
         items = intArrayOf(R.layout.widget_item_apricot, R.layout.widget_item_apricot, R.layout.widget_item_apricot),
     ),
     CITRUS(
-        "Citrus", StyleGroup.ORIGINAL, family = "sans-serif-medium", bold = false, startDp = 0f, leftAligned = false, shadow = false,
+        "Citrus", StyleGroup.ORIGINAL, family = "sans-serif-medium", bold = false, startDp = 0f, leftAligned = false, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_citrus, R.layout.widget_citrus, R.layout.widget_citrus),
         items = intArrayOf(R.layout.widget_item_citrus, R.layout.widget_item_citrus, R.layout.widget_item_citrus),
     ),
     MIDNIGHT(
-        "Midnight", StyleGroup.ORIGINAL, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false,
+        "Midnight", StyleGroup.ORIGINAL, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_midnight, R.layout.widget_midnight, R.layout.widget_midnight),
         items = intArrayOf(R.layout.widget_item_midnight, R.layout.widget_item_midnight, R.layout.widget_item_midnight),
     ),
     MONO(
-        "Mono", StyleGroup.ORIGINAL, family = "monospace", bold = false, startDp = 0f, leftAligned = false, shadow = false,
+        "Mono", StyleGroup.ORIGINAL, family = "monospace", bold = false, startDp = 0f, leftAligned = false, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_mono, R.layout.widget_mono, R.layout.widget_mono),
         items = intArrayOf(R.layout.widget_item_mono, R.layout.widget_item_mono, R.layout.widget_item_mono),
+    ),
+    PHOTO(
+        "Your photo", StyleGroup.PHOTO, family = "sans-serif-medium", bold = false, startDp = 0f, leftAligned = false, shadow = false, photo = true,
+        layouts = intArrayOf(R.layout.widget_photo, R.layout.widget_photo, R.layout.widget_photo),
+        items = intArrayOf(R.layout.widget_item_photo, R.layout.widget_item_photo, R.layout.widget_item_photo),
     );
 
     val wallpaper: Boolean get() = group == StyleGroup.WALLPAPER
@@ -176,6 +184,6 @@ enum class WidgetStyle(
 
     companion object {
         /** Number of distinct scroll-mode item layouts; the widget list adapter needs it. */
-        const val ITEM_VIEW_TYPES = 35
+        const val ITEM_VIEW_TYPES = 36
     }
 }

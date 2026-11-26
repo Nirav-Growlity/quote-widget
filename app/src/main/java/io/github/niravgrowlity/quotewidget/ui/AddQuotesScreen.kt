@@ -2,7 +2,12 @@
 
 package io.github.niravgrowlity.quotewidget.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.FilterChip
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -59,7 +64,12 @@ fun AddQuotesScreen(state: AppState, onClose: () -> Unit) {
     var mode by rememberSaveable { mutableIntStateOf(0) }
     var replace by rememberSaveable { mutableStateOf(false) }
     var confirmReplace by remember { mutableStateOf(false) }
-    val existing = remember { QuoteStore.all(ctx).size }
+    val collections = remember { QuoteStore.collections(ctx) }
+    var target by rememberSaveable {
+        mutableLongStateOf(collections.firstOrNull { it.id == state.collection }?.id ?: collections.first().id)
+    }
+    val targetName = collections.firstOrNull { it.id == target }?.name ?: ""
+    val existing = remember(target) { QuoteStore.quotesIn(ctx, target).size }
 
     val parsed = remember(text, mode) {
         val blank = when (mode) {
@@ -72,18 +82,19 @@ fun AddQuotesScreen(state: AppState, onClose: () -> Unit) {
 
     fun commit() {
         if (replace) {
-            QuoteStore.replaceAll(ctx, parsed)
-            state.say("Replaced your list with ${parsed.size} quotes")
+            QuoteStore.replaceCollection(ctx, parsed, target)
+            state.say("Replaced $targetName with ${parsed.size} quotes")
         } else {
-            val added = QuoteStore.addAll(ctx, parsed)
+            val added = QuoteStore.addAll(ctx, parsed, target)
             state.say(
                 when (added) {
-                    0 -> "Those quotes are already in your list"
-                    1 -> "Added 1 quote"
-                    else -> "Added $added quotes"
+                    0 -> "Those quotes are already in $targetName"
+                    1 -> "Added 1 quote to $targetName"
+                    else -> "Added $added quotes to $targetName"
                 },
             )
         }
+        state.collection = target
         state.changed()
         onClose()
     }
@@ -108,6 +119,22 @@ fun AddQuotesScreen(state: AppState, onClose: () -> Unit) {
         Column(
             Modifier.fillMaxSize().padding(padding).imePadding().padding(horizontal = 16.dp),
         ) {
+            if (collections.size > 1) {
+                Text(
+                    "Add to",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp),
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(bottom = 12.dp),
+                ) {
+                    items(collections, key = { it.id }) { c ->
+                        FilterChip(selected = c.id == target, onClick = { target = c.id }, label = { Text(c.name) })
+                    }
+                }
+            }
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                 SPLIT_MODES.forEachIndexed { i, (label, _) ->
                     SegmentedButton(
@@ -157,9 +184,9 @@ fun AddQuotesScreen(state: AppState, onClose: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("Replace my current list", style = MaterialTheme.typography.bodyLarge)
+                        Text("Replace the quotes in $targetName", style = MaterialTheme.typography.bodyLarge)
                         Text(
-                            "Removes your $existing quotes and pins first",
+                            "Removes its $existing quotes and pins first",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -173,8 +200,8 @@ fun AddQuotesScreen(state: AppState, onClose: () -> Unit) {
     if (confirmReplace) {
         AlertDialog(
             onDismissRequest = { confirmReplace = false },
-            title = { Text("Replace all quotes?") },
-            text = { Text("Your $existing quotes and pins will be removed and replaced with these ${parsed.size}.") },
+            title = { Text("Replace $targetName?") },
+            text = { Text("Its $existing quotes and pins will be removed and replaced with these ${parsed.size}.") },
             confirmButton = { TextButton(onClick = { confirmReplace = false; commit() }) { Text("Replace") } },
             dismissButton = { TextButton(onClick = { confirmReplace = false }) { Text("Cancel") } },
         )

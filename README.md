@@ -4,7 +4,11 @@ A small Android home-screen widget that shows **your own quotes**. It's free, ha
 
 - **Paste a whole list.** Put one quote per line, or leave a blank line between multi-line quotes. Bullets like `-`, `•` and `1.` are removed.
 - **Pin one, several, or none.** If you pin quotes, the widget rotates only through those. With no pins, it rotates through all of them.
-- **Choose how often it changes.** Any number of minutes, hours or days. You can also shuffle the order.
+- **Collections.** Keep quotes in as many collections as you like (Stoics, Work, Morning…). Choose which collections the widget shows, move quotes between them, and drag quotes into your own order.
+- **Choose how often it changes.** Any number of minutes, hours or days.
+- **Choose the order.** Your own order, shuffle, newest first, oldest first or A–Z. With several collections you can also alternate, taking one quote from each in turn.
+- **Your photo as the background.** The photo is cropped (or fitted) to the widget's shape. You can blur it, add an overlay in black, white or a colour taken from the photo, and pick the text colour, including colours from the photo. "Keep text readable" darkens or lightens the photo behind the text just enough that it always stands out. The text stays real text, so it's sharp.
+- **Backup and restore.** In Settings, save your collections, quotes, pins and widget settings to a file, then restore them later by adding them to what you have or replacing everything. A plain text file with one quote per line works too.
 - **Tap the quote** on the widget to skip to the next one. Tap the small corner text to open the app.
 - **Text that fits itself.** Each widget measures its real size and uses the largest text that shows the whole quote. Resize the widget and the text re-fits. Text never shrinks below a readable 13sp. A quote too long for that becomes scrollable, with a scrollbar and a "Scroll for more" hint.
 - **Light, dark, or follow the system.** This applies to both the app and the widget.

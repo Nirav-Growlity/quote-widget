@@ -41,6 +41,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,6 +58,21 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Slider
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.Color
+import io.github.niravgrowlity.quotewidget.CycleOrder
+import io.github.niravgrowlity.quotewidget.PhotoBackground
+import io.github.niravgrowlity.quotewidget.PhotoFit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
@@ -117,13 +133,29 @@ fun WidgetScreen(state: AppState, padding: PaddingValues) {
         )
 
         SectionTitle("Style")
+        val scope = rememberCoroutineScope()
+        val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) {
+                scope.launch {
+                    val ok = withContext(Dispatchers.IO) { PhotoBackground.import(ctx, uri) }
+                    if (ok) QuoteStore.setStyle(ctx, WidgetStyle.PHOTO) else state.say("Couldn't open that image")
+                    state.changed()
+                }
+            }
+        }
+        val choosePhoto = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
         val pick: (WidgetStyle) -> Unit = {
-            QuoteStore.setStyle(ctx, it)
-            state.changed()
+            if (it.photo && !PhotoBackground.has(ctx)) {
+                choosePhoto()
+            } else {
+                QuoteStore.setStyle(ctx, it)
+                state.changed()
+            }
         }
         StyleGroup.entries.forEach { group ->
             StyleRow(group.title, WidgetStyle.entries.filter { it.group == group }, style, state, pick)
         }
+        if (style.photo) PhotoSettings(state, choosePhoto)
         Text(
             "Classic palettes use the published colours of Catppuccin, Rosé Pine, Nord, Gruvbox, Dracula, " +
                 "Solarized, Tokyo Night, Everforest, Kanagawa and One Dark.",
@@ -190,9 +222,53 @@ fun WidgetScreen(state: AppState, padding: PaddingValues) {
                 )
             }
         }
-        SwitchRow("Shuffle", "Mix up the order each time it goes through your quotes", QuoteStore.shuffle(ctx)) {
-            QuoteStore.setShuffle(ctx, it)
-            state.changed()
+        val collections = QuoteStore.collections(ctx)
+        val inRotation = QuoteStore.rotationCollections(ctx)
+        if (collections.size > 1) {
+            Setting("Collections on the widget") {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    collections.forEach { c ->
+                        FilterChip(
+                            selected = c.id in inRotation,
+                            onClick = {
+                                val next = if (c.id in inRotation) inRotation - c.id else inRotation + c.id
+                                if (next.isNotEmpty()) {
+                                    QuoteStore.setRotationCollections(ctx, next)
+                                    state.changed()
+                                }
+                            },
+                            label = { Text(c.name) },
+                        )
+                    }
+                }
+            }
+        }
+        Setting("Order") {
+            val order = QuoteStore.cycleOrder(ctx)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CycleOrder.entries.forEach { o ->
+                    FilterChip(
+                        selected = order == o,
+                        onClick = { QuoteStore.setCycleOrder(ctx, o); state.changed() },
+                        label = { Text(o.label) },
+                    )
+                }
+            }
+            Text(
+                order.description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (inRotation.size > 1) {
+            SwitchRow(
+                "Alternate between collections",
+                "One quote from each collection in turn, instead of one collection after another",
+                QuoteStore.alternate(ctx),
+            ) {
+                QuoteStore.setAlternate(ctx, it)
+                state.changed()
+            }
         }
     }
 
@@ -294,6 +370,125 @@ private fun StyleTile(state: AppState, style: WidgetStyle, selected: Boolean, on
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
+        }
+    }
+}
+
+/** Photo background options, shown when the "Your photo" style is selected. */
+@Composable
+private fun PhotoSettings(state: AppState, onChoose: () -> Unit) {
+    val ctx = LocalContext.current
+    state.tick
+    val has = PhotoBackground.has(ctx)
+    val c = MaterialTheme.colorScheme
+    Column(
+        Modifier
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(c.surfaceContainerLow)
+            .padding(vertical = 8.dp),
+    ) {
+        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                if (has) "Photo background" else "Choose a photo for the background",
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.weight(1f),
+            )
+            if (has) {
+                TextButton(onClick = {
+                    PhotoBackground.remove(ctx)
+                    QuoteStore.setStyle(ctx, WidgetStyle.EDITORIAL)
+                    state.changed()
+                }) { Text("Remove") }
+            }
+            FilledTonalButton(onClick = onChoose) {
+                Icon(AppIcons.Image, contentDescription = null, Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(if (has) "Change" else "Choose")
+            }
+        }
+        if (!has) return@Column
+        fun changed() = state.changed()
+
+        Setting("Fit") {
+            Segmented(PhotoFit.entries, PhotoBackground.fit(ctx), { it.label }) { PhotoBackground.setFit(ctx, it); changed() }
+            Text(
+                "Fill crops the photo to the widget’s shape. Fit shows all of it, with the photo’s own colour around it.",
+                style = MaterialTheme.typography.bodySmall,
+                color = c.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+        SliderSetting("Blur", PhotoBackground.blur(ctx), 20, { if (it == 0) "Off" else "$it" }) {
+            PhotoBackground.setBlur(ctx, it); changed()
+        }
+        val swatches = PhotoBackground.swatches(ctx)
+        Setting("Overlay") {
+            ColorChoices(
+                listOf<Int?>(0xFF000000.toInt(), 0xFFFFFFFF.toInt()) + swatches,
+                PhotoBackground.overlayColor(ctx),
+            ) { PhotoBackground.setOverlayColor(ctx, it ?: 0xFF000000.toInt()); changed() }
+        }
+        SliderSetting("Overlay strength", PhotoBackground.overlay(ctx), 80, { "$it%" }) {
+            PhotoBackground.setOverlay(ctx, it); changed()
+        }
+        Setting("Text colour") {
+            ColorChoices(
+                listOf<Int?>(null, 0xFFFFFFFF.toInt(), 0xFF1C1B1F.toInt()) + swatches,
+                PhotoBackground.textColor(ctx),
+            ) { PhotoBackground.setTextColor(ctx, it); changed() }
+        }
+        SwitchRow(
+            "Keep text readable",
+            "Darkens or lightens the photo behind the text just enough for it to stand out",
+            PhotoBackground.keepReadable(ctx),
+        ) { PhotoBackground.setKeepReadable(ctx, it); changed() }
+    }
+}
+
+/** A slider that saves when you let go, so the widget isn't redrawn on every tiny move. */
+@Composable
+private fun SliderSetting(label: String, value: Int, max: Int, describe: (Int) -> String, onSet: (Int) -> Unit) {
+    var v by remember(value) { mutableFloatStateOf(value.toFloat()) }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+            Text(describe(v.roundToInt()), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+        }
+        Slider(
+            value = v,
+            onValueChange = { v = it },
+            valueRange = 0f..max.toFloat(),
+            onValueChangeFinished = { onSet(v.roundToInt()) },
+        )
+    }
+}
+
+/** Colour swatches; null is "Auto". */
+@Composable
+private fun ColorChoices(options: List<Int?>, selected: Int?, onPick: (Int?) -> Unit) {
+    val c = MaterialTheme.colorScheme
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        options.distinct().forEach { color ->
+            val isSel = color == selected
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(if (color == null) c.surfaceContainerHighest else Color(color))
+                    .border(if (isSel) 3.dp else 1.dp, if (isSel) c.primary else c.outlineVariant, CircleShape)
+                    .clickable { onPick(color) }
+                    .semantics { this.selected = isSel },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (color == null) Text("Auto", style = MaterialTheme.typography.labelSmall)
+                else if (isSel) Icon(
+                    Icons.Rounded.Check, contentDescription = null,
+                    tint = if (PhotoBackground.luminance(color) > 0.5) Color.Black else Color.White,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
     }
 }

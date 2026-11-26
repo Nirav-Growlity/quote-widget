@@ -63,4 +63,8 @@ dependencies {
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.foundation:foundation")
+    // Colours for the photo background, taken from the photo.
+    implementation("androidx.palette:palette:1.0.0")
+    // Drag to reorder quotes.
+    implementation("sh.calvin.reorderable:reorderable:2.4.3")
 }

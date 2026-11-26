@@ -6,7 +6,19 @@ import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.random.Random
 
-data class Quote(val id: Long, val text: String, val pinned: Boolean)
+/** A quote. [collection] is the id of the collection it belongs to. */
+data class Quote(val id: Long, val text: String, val pinned: Boolean, val collection: Long = QuoteStore.DEFAULT_COLLECTION)
+
+data class QuoteCollection(val id: Long, val name: String)
+
+/** The order the widget goes through the quotes in. */
+enum class CycleOrder(val label: String, val description: String) {
+    MY_ORDER("My order", "In the order you arrange them. Use Reorder on the Quotes tab."),
+    SHUFFLE("Shuffle", "A new random order each time it has shown them all."),
+    NEWEST("Newest first", "Most recently added first."),
+    OLDEST("Oldest first", "In the order you added them."),
+    A_Z("A–Z", "Alphabetically."),
+}
 
 /** Light/dark for the app and the widget. Order matters: it indexes WidgetStyle's layouts. */
 enum class ThemeMode(val label: String) { SYSTEM("System"), LIGHT("Light"), DARK("Dark") }
@@ -47,49 +59,151 @@ val ROTATION_PRESETS = listOf(
 /**
  * Everything lives in SharedPreferences on the phone. Nothing is uploaded anywhere.
  *
- * Rotation: the widget cycles through the "pool", which is the pinned quotes if any are pinned,
- * otherwise all quotes. `index` is the position in the (optionally shuffled) pool.
+ * Quotes are one list whose order is the user's own order ("My order"); each quote belongs to a
+ * collection. Rotation: the widget cycles through the quotes of the collections chosen for it,
+ * only the pinned ones if any of those are pinned, in the chosen [CycleOrder]. `index` is the
+ * position in that list.
  */
 object QuoteStore {
+    const val DEFAULT_COLLECTION = 1L
+
     private fun prefs(ctx: Context): SharedPreferences =
         ctx.getSharedPreferences("quotes", Context.MODE_PRIVATE)
+
+    // ---------- collections ----------
+
+    /** Collections in the user's order. Older versions had none: everything is in "My quotes". */
+    fun collections(ctx: Context): List<QuoteCollection> {
+        val raw = prefs(ctx).getString("collections", null)
+        val list = raw?.let {
+            val arr = JSONArray(it)
+            (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                QuoteCollection(o.getLong("id"), o.getString("name"))
+            }
+        }.orEmpty()
+        return list.ifEmpty { listOf(QuoteCollection(DEFAULT_COLLECTION, "My quotes")) }
+    }
+
+    private fun collectionsJson(list: List<QuoteCollection>) =
+        JSONArray().apply { list.forEach { put(JSONObject().put("id", it.id).put("name", it.name)) } }.toString()
+
+    private fun saveCollections(ctx: Context, list: List<QuoteCollection>) =
+        prefs(ctx).edit().putString("collections", collectionsJson(list)).apply()
+
+    fun addCollection(ctx: Context, name: String): QuoteCollection {
+        val list = collections(ctx)
+        val c = QuoteCollection((list.maxOfOrNull { it.id } ?: 0L) + 1, name.trim())
+        saveCollections(ctx, list + c)
+        return c
+    }
+
+    fun renameCollection(ctx: Context, id: Long, name: String) =
+        saveCollections(ctx, collections(ctx).map { if (it.id == id) it.copy(name = name.trim()) else it })
+
+    /** Moves a collection one place earlier (-1) or later (+1). */
+    fun moveCollection(ctx: Context, id: Long, delta: Int) = keepingCurrent(ctx) {
+        val list = collections(ctx).toMutableList()
+        val i = list.indexOfFirst { it.id == id }
+        val j = i + delta
+        if (i >= 0 && j in list.indices) {
+            list.add(j, list.removeAt(i))
+            saveCollections(ctx, list)
+        }
+    }
+
+    /** Everything needed to undo a delete or a restore. */
+    class Snapshot internal constructor(internal val collections: String?, internal val quotes: String?, internal val rotation: String?)
+
+    fun snapshot(ctx: Context) = prefs(ctx).let {
+        Snapshot(it.getString("collections", null), it.getString("list", null), it.getString("rotCollections", null))
+    }
+
+    fun restoreSnapshot(ctx: Context, s: Snapshot) {
+        prefs(ctx).edit()
+            .putString("collections", s.collections)
+            .putString("list", s.quotes)
+            .putString("rotCollections", s.rotation)
+            .apply()
+    }
+
+    /** Deletes a collection and its quotes. The last collection can't be deleted. */
+    fun deleteCollection(ctx: Context, id: Long): Boolean = keepingCurrent(ctx) {
+        val list = collections(ctx)
+        if (list.size <= 1) return@keepingCurrent false
+        prefs(ctx).edit()
+            .putString("collections", collectionsJson(list.filterNot { it.id == id }))
+            .putString("list", quotesJson(all(ctx).filterNot { it.collection == id }))
+            .apply()
+        true
+    }
 
     // ---------- quotes ----------
 
     fun all(ctx: Context): List<Quote> {
         val raw = prefs(ctx).getString("list", null) ?: return emptyList()
+        val known = collections(ctx).map { it.id }.toSet()
         val arr = JSONArray(raw)
         return (0 until arr.length()).map { i ->
             val o = arr.getJSONObject(i)
-            Quote(o.getLong("id"), o.getString("text"), o.optBoolean("pinned"))
+            // A quote whose collection is missing (old data, half-finished change) goes to the
+            // first collection instead of disappearing.
+            val c = o.optLong("c", DEFAULT_COLLECTION).takeIf { it in known } ?: known.first()
+            Quote(o.getLong("id"), o.getString("text"), o.optBoolean("pinned"), c)
         }
     }
+
+    fun quotesIn(ctx: Context, collection: Long) = all(ctx).filter { it.collection == collection }
+
+    private fun quotesJson(list: List<Quote>) = JSONArray().apply {
+        list.forEach {
+            put(JSONObject().put("id", it.id).put("text", it.text).put("pinned", it.pinned).put("c", it.collection))
+        }
+    }.toString()
 
     private fun saveAll(ctx: Context, list: List<Quote>) {
-        val arr = JSONArray()
-        list.forEach {
-            arr.put(JSONObject().put("id", it.id).put("text", it.text).put("pinned", it.pinned))
-        }
-        prefs(ctx).edit().putString("list", arr.toString()).apply()
+        prefs(ctx).edit().putString("list", quotesJson(list)).apply()
     }
 
-    /** Adds new quotes, skipping exact duplicates. Returns how many were added. */
-    fun addAll(ctx: Context, texts: List<String>): Int = keepingCurrent(ctx) {
+    /** Adds new quotes to a collection, skipping ones already in it. Returns how many were added. */
+    fun addAll(ctx: Context, texts: List<String>, collection: Long): Int = keepingCurrent(ctx) {
         val cur = all(ctx)
-        val seen = cur.map { it.text }.toHashSet()
+        val seen = cur.filter { it.collection == collection }.map { it.text }.toHashSet()
         var nextId = (cur.maxOfOrNull { it.id } ?: 0L) + 1
-        val added = texts.filter { seen.add(it) }.map { Quote(nextId++, it, false) }
+        val added = texts.filter { seen.add(it) }.map { Quote(nextId++, it, false, collection) }
         saveAll(ctx, cur + added)
         added.size
     }
 
-    fun replaceAll(ctx: Context, texts: List<String>) {
-        saveAll(ctx, texts.distinct().mapIndexed { i, t -> Quote(i + 1L, t, false) })
+    /** Replaces the quotes of one collection. */
+    fun replaceCollection(ctx: Context, texts: List<String>, collection: Long) {
+        val others = all(ctx).filterNot { it.collection == collection }
+        var nextId = (all(ctx).maxOfOrNull { it.id } ?: 0L) + 1
+        saveAll(ctx, others + texts.distinct().map { Quote(nextId++, it, false, collection) })
         setIndex(ctx, 0)
     }
 
     fun update(ctx: Context, q: Quote) = keepingCurrent(ctx) {
         saveAll(ctx, all(ctx).map { if (it.id == q.id) q else it })
+    }
+
+    /** Moves a quote to another collection, at the end of that collection. */
+    fun moveToCollection(ctx: Context, id: Long, collection: Long) = keepingCurrent(ctx) {
+        val list = all(ctx)
+        val q = list.firstOrNull { it.id == id } ?: return@keepingCurrent
+        saveAll(ctx, list.filterNot { it.id == id } + q.copy(collection = collection))
+    }
+
+    /**
+     * Saves a new order for some quotes (the ones in [orderedIds], usually one collection). They
+     * keep the same slots in the overall list, so other collections' order is untouched.
+     */
+    fun reorder(ctx: Context, orderedIds: List<Long>) = keepingCurrent(ctx) {
+        val list = all(ctx)
+        val byId = list.associateBy { it.id }
+        val ids = orderedIds.filter { it in byId }.toSet()
+        val queue = ArrayDeque(orderedIds.filter { it in byId }.map { byId.getValue(it) })
+        saveAll(ctx, list.map { if (it.id in ids) queue.removeFirst() else it })
     }
 
     /** Removes a quote and returns its old position, so it can be restored with [restore]. */
@@ -111,14 +225,77 @@ object QuoteStore {
         saveAll(ctx, all(ctx).map { it.copy(pinned = false) })
     }
 
+    /** Writes collections and quotes together (restore). */
+    internal fun replaceEverything(ctx: Context, cols: List<QuoteCollection>, quotes: List<Quote>) {
+        prefs(ctx).edit()
+            .putString("collections", collectionsJson(cols))
+            .putString("list", quotesJson(quotes))
+            .remove("rotCollections")
+            .putInt("index", 0)
+            .apply()
+    }
+
     // ---------- rotation ----------
 
-    /** The quotes the widget rotates through, in display order. */
+    /** Collections the widget rotates through. Ones that no longer exist are ignored; none left = all. */
+    fun rotationCollections(ctx: Context): Set<Long> {
+        val existing = collections(ctx).map { it.id }
+        val saved = prefs(ctx).getString("rotCollections", null)
+            ?.split(',')?.mapNotNull { it.toLongOrNull() }?.filter { it in existing }?.toSet()
+        return saved?.ifEmpty { null } ?: existing.toSet()
+    }
+
+    fun setRotationCollections(ctx: Context, ids: Set<Long>) = keepingCurrent(ctx) {
+        prefs(ctx).edit().putString("rotCollections", ids.joinToString(",")).apply()
+    }
+
+    fun cycleOrder(ctx: Context): CycleOrder {
+        val p = prefs(ctx)
+        val saved = CycleOrder.entries.firstOrNull { it.name == p.getString("order", null) }
+        // Older versions had only a shuffle switch.
+        return saved ?: if (p.getBoolean("shuffle", false)) CycleOrder.SHUFFLE else CycleOrder.MY_ORDER
+    }
+
+    fun setCycleOrder(ctx: Context, o: CycleOrder) = keepingCurrent(ctx) {
+        prefs(ctx).edit().putString("order", o.name).apply()
+    }
+
+    /** Take one quote from each collection in turn instead of finishing one collection first. */
+    fun alternate(ctx: Context): Boolean = prefs(ctx).getBoolean("alternate", false)
+    fun setAlternate(ctx: Context, on: Boolean) = keepingCurrent(ctx) {
+        prefs(ctx).edit().putBoolean("alternate", on).apply()
+    }
+
+    /** The quotes the widget rotates through, in the order it shows them. */
     fun rotation(ctx: Context): List<Quote> {
-        val a = all(ctx)
-        val pinned = a.filter { it.pinned }
-        val pool = pinned.ifEmpty { a }
-        return if (shuffle(ctx)) pool.shuffled(Random(seed(ctx))) else pool
+        val selected = rotationCollections(ctx)
+        val cols = collections(ctx).filter { it.id in selected }
+        val inRotation = all(ctx).filter { it.collection in selected }
+        val pool = inRotation.filter { it.pinned }.ifEmpty { inRotation }
+        val order = cycleOrder(ctx)
+        val seed = seed(ctx)
+
+        fun arrange(list: List<Quote>, salt: Long): List<Quote> = when (order) {
+            CycleOrder.MY_ORDER -> list
+            CycleOrder.SHUFFLE -> list.shuffled(Random(seed + salt))
+            CycleOrder.NEWEST -> list.sortedByDescending { it.id }
+            CycleOrder.OLDEST -> list.sortedBy { it.id }
+            CycleOrder.A_Z -> list.sortedBy { QuoteFormat.split(it.text).first.lowercase() }
+        }
+
+        val groups = cols.map { c -> arrange(pool.filter { it.collection == c.id }, c.id) }.filter { it.isNotEmpty() }
+        if (alternate(ctx) && groups.size > 1) {
+            // A1, B1, C1, A2, B2, ... ; a collection drops out when it runs out.
+            val out = ArrayList<Quote>(pool.size)
+            var i = 0
+            while (out.size < pool.size) {
+                groups.forEach { g -> if (i < g.size) out.add(g[i]) }
+                i++
+            }
+            return out
+        }
+        // One collection after another in "My order"; otherwise the order applies to all of them.
+        return if (order == CycleOrder.MY_ORDER) groups.flatten() else arrange(pool, 0L)
     }
 
     fun index(ctx: Context): Int = prefs(ctx).getInt("index", 0)
@@ -151,7 +328,7 @@ object QuoteStore {
         return true
     }
 
-    /** Runs a change to the quote list without making the widget jump to a different quote. */
+    /** Runs a change without making the widget jump to a different quote. */
     private fun <T> keepingCurrent(ctx: Context, block: () -> T): T {
         val curId = current(ctx)?.id
         val result = block()
@@ -194,11 +371,6 @@ object QuoteStore {
     }
     fun setPeriodMinutes(ctx: Context, m: Long) = prefs(ctx).edit().putLong("period", m).apply()
 
-    fun shuffle(ctx: Context): Boolean = prefs(ctx).getBoolean("shuffle", false)
-    fun setShuffle(ctx: Context, on: Boolean) = keepingCurrent(ctx) {
-        prefs(ctx).edit().putBoolean("shuffle", on).apply()
-    }
-
     private fun seed(ctx: Context): Long {
         val p = prefs(ctx)
         if (!p.contains("seed")) p.edit().putLong("seed", Random.nextLong()).apply()
@@ -230,6 +402,29 @@ object QuoteStore {
 
     fun showCounter(ctx: Context): Boolean = prefs(ctx).getBoolean("counter", true)
     fun setShowCounter(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean("counter", on).apply()
+
+    /** Widget and rotation settings included in a backup (not the app's internal state). */
+    private val BACKUP_KEYS = listOf("style", "font", "textSize", "align", "theme", "period", "order", "alternate", "counter", "rotCollections")
+
+    internal fun exportSettings(ctx: Context): JSONObject {
+        val p = prefs(ctx).all
+        return JSONObject().apply { BACKUP_KEYS.forEach { k -> p[k]?.let { put(k, it) } } }
+    }
+
+    internal fun importSettings(ctx: Context, o: JSONObject) {
+        val e = prefs(ctx).edit()
+        o.optString("style").takeIf { n -> WidgetStyle.entries.any { it.name == n } }?.let { e.putString("style", it) }
+        o.optString("font").takeIf { n -> QuoteFont.entries.any { it.name == n } }?.let { e.putString("font", it) }
+        o.optString("textSize").takeIf { n -> TextSize.entries.any { it.name == n } }?.let { e.putString("textSize", it) }
+        o.optString("align").takeIf { n -> Align.entries.any { it.name == n } }?.let { e.putString("align", it) }
+        o.optString("theme").takeIf { n -> ThemeMode.entries.any { it.name == n } }?.let { e.putString("theme", it) }
+        o.optString("order").takeIf { n -> CycleOrder.entries.any { it.name == n } }?.let { e.putString("order", it) }
+        if (o.has("period")) e.putLong("period", o.optLong("period", 1440L).coerceAtLeast(MIN_PERIOD_MINUTES))
+        if (o.has("alternate")) e.putBoolean("alternate", o.optBoolean("alternate"))
+        if (o.has("counter")) e.putBoolean("counter", o.optBoolean("counter", true))
+        if (o.has("rotCollections")) e.putString("rotCollections", o.optString("rotCollections"))
+        e.apply()
+    }
 
     private inline fun <reified E : Enum<E>> enumOr(name: String?, default: E): E =
         enumValues<E>().firstOrNull { it.name == name } ?: default

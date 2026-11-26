@@ -3,6 +3,7 @@ package io.github.niravgrowlity.quotewidget.ui
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import io.github.niravgrowlity.quotewidget.QuoteStore
@@ -48,6 +49,9 @@ class AppState private constructor(private val ctx: Context) {
     var themeMode by mutableStateOf(QuoteStore.themeMode(ctx))
         private set
 
+    /** The collection open on the Quotes tab; Add quotes adds to it by default. */
+    var collection by mutableLongStateOf(QuoteStore.collections(ctx).first().id)
+
     var message by mutableStateOf<Msg?>(null)
     var available by mutableStateOf<Updater.Release?>(null)
     var needsInstallPermission by mutableStateOf<Updater.Release?>(null)
@@ -58,6 +62,13 @@ class AppState private constructor(private val ctx: Context) {
     fun changed(widget: Boolean = true) {
         tick++
         if (widget) WidgetRenderer.updateAll(ctx)
+    }
+
+    /** Re-reads settings that the UI keeps a copy of (after a restore). */
+    fun reload() {
+        themeMode = QuoteStore.themeMode(ctx)
+        collection = QuoteStore.collections(ctx).first().id
+        changed()
     }
 
     fun setTheme(mode: ThemeMode) {

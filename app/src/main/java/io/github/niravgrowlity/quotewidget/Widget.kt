@@ -224,6 +224,12 @@ object WidgetRenderer {
         val gravity = if (!style.leftAligned && QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER_HORIZONTAL else Gravity.START
         val item = RemoteViews(ctx.packageName, style.item(QuoteStore.themeMode(ctx)))
         item.setOnClickFillInIntent(R.id.widget_item, Intent())
+        if (style.photo) {
+            // Same text colour the photo background was rendered for.
+            val color = PhotoBackground.lastColors(ctx).first
+            item.setTextColor(R.id.widget_item_text, color)
+            item.setInt(R.id.widget_item_img, "setColorFilter", color)
+        }
         val face = QuoteStore.font(ctx).typeface(ctx)
         val bmp = face?.let {
             textBitmap(ctx, text, it, READABLE_SP, widgetWidthDp - 2 * PADDING_DP - style.startDp - ITEM_END_DP, gravity, style)
@@ -257,6 +263,16 @@ object WidgetRenderer {
         sampleText: String? = null,
     ): RemoteViews {
         val rv = RemoteViews(ctx.packageName, style.layout(QuoteStore.themeMode(ctx)))
+        if (style.photo) {
+            // The photo sized to this widget, plus text colours that read well on it.
+            val dm = ctx.resources.displayMetrics
+            val photo = PhotoBackground.render(ctx, (widthDp * dm.density).toInt(), (heightDp * dm.density).toInt())
+            rv.setImageViewBitmap(R.id.widget_bg, photo.bitmap)
+            rv.setTextColor(R.id.widget_text, photo.text)
+            rv.setTextColor(R.id.widget_author, photo.accent)
+            rv.setTextColor(R.id.widget_meta, photo.text)
+            rv.setInt(R.id.widget_text_img, "setColorFilter", photo.text)
+        }
         val openApp = PendingIntent.getActivity(
             ctx, 0, Intent(ctx, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
