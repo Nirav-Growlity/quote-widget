@@ -115,21 +115,24 @@ fun WidgetScreen(state: AppState, padding: PaddingValues) {
         )
 
         SectionTitle("Style")
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            items(WidgetStyle.entries) { s ->
-                StyleTile(state, s, selected = s == style) {
-                    QuoteStore.setStyle(ctx, s)
-                    state.changed()
-                }
-            }
+        val pick: (WidgetStyle) -> Unit = {
+            QuoteStore.setStyle(ctx, it)
+            state.changed()
         }
+        StyleRow("Colour themes", WidgetStyle.entries.filter { !it.wallpaper }, style, state, pick)
+        StyleRow("Match my wallpaper", WidgetStyle.entries.filter { it.wallpaper }, style, state, pick)
 
         SectionTitle("Appearance")
         Setting("Theme") {
             Segmented(ThemeMode.entries, state.themeMode, { it.label }) { state.setTheme(it) }
+            if (!style.wallpaper) {
+                Text(
+                    "${style.label} keeps its own colours. Light and dark change the app and wallpaper styles.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
         }
         Setting("Largest text size") {
             Segmented(TextSize.entries, QuoteStore.textSize(ctx), { it.label }) {
@@ -223,6 +226,31 @@ private fun Backdrop(modifier: Modifier, corner: Int, content: @Composable () ->
             .clip(RoundedCornerShape(corner.dp))
             .background(Brush.linearGradient(listOf(c.primary, c.tertiary))),
     ) { content() }
+}
+
+@Composable
+private fun StyleRow(
+    title: String,
+    styles: List<WidgetStyle>,
+    current: WidgetStyle,
+    state: AppState,
+    onPick: (WidgetStyle) -> Unit,
+) {
+    Text(
+        title,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 20.dp, top = 4.dp, bottom = 8.dp),
+    )
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(bottom = 12.dp),
+    ) {
+        items(styles, key = { it.name }) { s ->
+            StyleTile(state, s, selected = s == current) { onPick(s) }
+        }
+    }
 }
 
 @Composable

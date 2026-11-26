@@ -56,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.niravgrowlity.quotewidget.Quote
+import io.github.niravgrowlity.quotewidget.QuoteFormat
 import io.github.niravgrowlity.quotewidget.QuoteStore
 import io.github.niravgrowlity.quotewidget.Rotation
 
@@ -225,7 +226,18 @@ private fun NowShowing(quote: Quote, position: Int, total: Int, pinned: Boolean,
                 transitionSpec = { fadeIn(tween(240)) togetherWith fadeOut(tween(120)) },
                 label = "quote",
             ) { text ->
-                Text(text, style = QuoteType.hero, maxLines = 10, overflow = TextOverflow.Ellipsis)
+                val (body, author) = QuoteFormat.split(text)
+                Column {
+                    Text(body, style = QuoteType.hero, maxLines = 10, overflow = TextOverflow.Ellipsis)
+                    if (author != null) {
+                        Text(
+                            "— $author",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 12.dp),
+                        )
+                    }
+                }
             }
             Row(Modifier.fillMaxWidth().padding(top = 20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -260,7 +272,16 @@ private fun QuoteRow(
     ) {
         Row(Modifier.padding(start = 18.dp, top = 12.dp, bottom = 12.dp, end = 4.dp)) {
             Column(Modifier.weight(1f).padding(top = 6.dp, bottom = 4.dp)) {
-                Text(quote.text, style = QuoteType.row, maxLines = 4, overflow = TextOverflow.Ellipsis)
+                val (body, author) = QuoteFormat.split(quote.text)
+                Text(body, style = QuoteType.row, maxLines = 4, overflow = TextOverflow.Ellipsis)
+                if (author != null) {
+                    Text(
+                        "— $author",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colors.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
                 if (isCurrent) {
                     Text(
                         "On your widget now",

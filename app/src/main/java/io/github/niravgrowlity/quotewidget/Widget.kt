@@ -104,7 +104,7 @@ class QuoteListService : RemoteViewsService() {
         override fun onDestroy() = Unit
         override fun getCount() = if (QuoteStore.current(ctx) != null) 1 else 0
         override fun getViewAt(position: Int): RemoteViews =
-            WidgetRenderer.scrollItem(ctx, QuoteStore.current(ctx)?.text ?: "")
+            WidgetRenderer.scrollItem(ctx, WidgetRenderer.scrollText(QuoteStore.current(ctx)?.text ?: ""))
         override fun getLoadingView(): RemoteViews? = null
         override fun getViewTypeCount() = WidgetRenderer.ITEM_VIEW_TYPES
         override fun getItemId(position: Int) = position.toLong()
@@ -120,7 +120,15 @@ object WidgetRenderer {
     /** Smallest size we'll shrink to. Below this the quote scrolls instead, so it stays readable. */
     const val READABLE_SP = 13f
     private const val MAX_SP = 30f
-    const val ITEM_VIEW_TYPES = WidgetLayouts.ITEM_VIEW_TYPES
+    const val ITEM_VIEW_TYPES = WidgetStyle.ITEM_VIEW_TYPES
+    /** Author line: 8dp gap + one line of ~12sp text. */
+    private const val AUTHOR_DP = 26f
+
+    /** Text for the scroll-mode list: the quote with its author underneath. */
+    fun scrollText(raw: String): String {
+        val (body, author) = QuoteFormat.split(raw)
+        return if (author != null) "$body\n\n\u2014 $author" else body
+    }
 
     private fun component(ctx: Context) = ComponentName(ctx, QuoteWidgetProvider::class.java)
 
@@ -186,41 +194,48 @@ object WidgetRenderer {
             rv.setTextViewText(R.id.widget_text, ctx.getString(R.string.widget_empty))
             rv.setTextViewTextSize(R.id.widget_text, TypedValue.COMPLEX_UNIT_SP, 14f)
             rv.setViewVisibility(R.id.widget_meta, View.GONE)
-            if (interactive) rv.setOnClickPendingIntent(R.id.widget_text, openApp)
+            if (interactive) rv.setOnClickPendingIntent(R.id.widget_body, openApp)
             return rv
         }
 
+        val (body, author) = QuoteFormat.split(q.text)
         val pinned = rotation.any { it.pinned }
         val metaWanted = sampleText == null && (QuoteStore.showCounter(ctx) || pinned)
         val maxSp = (MAX_SP * QuoteStore.textSize(ctx).scale).coerceAtLeast(READABLE_SP)
         val fitted = fitTextSize(
-            ctx, q.text,
+            ctx, body,
             widthDp - 2 * PADDING_DP - style.startDp,
-            heightDp - 2 * PADDING_DP - (if (metaWanted) META_DP else 0f),
+            heightDp - 2 * PADDING_DP - (if (metaWanted) META_DP else 0f) - (if (author != null) AUTHOR_DP else 0f),
             maxSp, style.typeface(),
         )
         val scrolling = fitted == null && interactive
+        val hGravity = if (QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER_HORIZONTAL else Gravity.START
 
         if (!scrolling) {
+            val sp = fitted ?: READABLE_SP
             rv.setViewVisibility(R.id.widget_list, View.GONE)
-            rv.setViewVisibility(R.id.widget_text, View.VISIBLE)
-            rv.setTextViewText(R.id.widget_text, q.text)
-            rv.setTextViewTextSize(R.id.widget_text, TypedValue.COMPLEX_UNIT_SP, fitted ?: READABLE_SP)
-            rv.setInt(
-                R.id.widget_text, "setGravity",
-                if (QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER
-                else Gravity.START or Gravity.CENTER_VERTICAL,
-            )
-            if (interactive) rv.setOnClickPendingIntent(R.id.widget_text, Rotation.intent(ctx, Rotation.ACTION_NEXT))
+            rv.setViewVisibility(R.id.widget_body, View.VISIBLE)
+            rv.setTextViewText(R.id.widget_text, body)
+            rv.setTextViewTextSize(R.id.widget_text, TypedValue.COMPLEX_UNIT_SP, sp)
+            rv.setInt(R.id.widget_text, "setGravity", hGravity)
+            if (author != null) {
+                rv.setTextViewText(R.id.widget_author, "\u2014 $author")
+                rv.setTextViewTextSize(R.id.widget_author, TypedValue.COMPLEX_UNIT_SP, (sp * 0.62f).coerceIn(11f, 15f))
+                rv.setInt(R.id.widget_author, "setGravity", hGravity)
+                rv.setViewVisibility(R.id.widget_author, View.VISIBLE)
+            } else {
+                rv.setViewVisibility(R.id.widget_author, View.GONE)
+            }
+            if (interactive) rv.setOnClickPendingIntent(R.id.widget_body, Rotation.intent(ctx, Rotation.ACTION_NEXT))
         } else {
             // Too long to fit at a readable size: show it at READABLE_SP in a scrollable list.
-            rv.setViewVisibility(R.id.widget_text, View.GONE)
+            rv.setViewVisibility(R.id.widget_body, View.GONE)
             rv.setViewVisibility(R.id.widget_list, View.VISIBLE)
             if (Build.VERSION.SDK_INT >= 31) {
                 rv.setRemoteAdapter(
                     R.id.widget_list,
                     RemoteViews.RemoteCollectionItems.Builder()
-                        .addItem(q.id, scrollItem(ctx, q.text, style))
+                        .addItem(q.id, scrollItem(ctx, scrollText(q.text), style))
                         .setViewTypeCount(ITEM_VIEW_TYPES)
                         .build(),
                 )
