@@ -6,7 +6,7 @@ A small Android home-screen widget that shows **your own quotes**. It's free, ha
 - **Pin one, several, or none.** If you pin quotes, the widget rotates only through those. With no pins, it rotates through all of them.
 - **Choose how often it changes.** Any number of minutes, hours or days. You can also shuffle the order.
 - **Tap the quote** on the widget to skip to the next one. Tap the small corner text to open the app.
-- **Text that fits itself.** Each widget measures its real size and uses the largest text that shows the whole quote. Resize the widget and the text re-fits. Text never shrinks below a readable 13sp. A quote too long for that becomes scrollable, with a scrollbar and a "↕ scroll" hint.
+- **Text that fits itself.** Each widget measures its real size and uses the largest text that shows the whole quote. Resize the widget and the text re-fits. Text never shrinks below a readable 13sp. A quote too long for that becomes scrollable, with a scrollbar and a "Scroll for more" hint.
 - **Light, dark, or follow the system.** This applies to both the app and the widget.
 - **Material You.** On Android 12 and newer, the app and widget use your wallpaper colours. There are five widget styles: *Editorial* (serif with an accent quote mark), *Tonal*, *Bold*, *Gradient* and *No background*. Each comes in light and dark, and you can also set the text size and alignment. The app shows a live preview of every option.
 - **Built to be calm.** The app has two tabs. *Quotes* holds your collection, with the quote currently on your widget at the top. *Widget* controls how it looks and how often it changes.
@@ -17,7 +17,7 @@ A small Android home-screen widget that shows **your own quotes**. It's free, ha
 1. On your phone, open the [latest release](../../releases/latest) and download `quote-widget.apk`.
 2. Open the file. Android will ask you to allow installs from your browser or file manager, so allow it once.
 3. Long-press your home screen, choose **Widgets**, then **Quote Widget**, and drag it out.
-4. Open the app, tap **Paste quotes**, and you're done.
+4. Open the app, tap **Add quotes**, and paste your list.
 
 After this first install, **all updates happen inside the app**, so you never need to come back here. The first time, Android asks you to let *Quote Widget* install apps. Turn that on, press back, and the update carries on by itself. On Android 12 and newer, later updates usually install without even a confirmation screen.
 
