@@ -1,0 +1,49 @@
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
+
+val keystorePath: String? = System.getenv("KEYSTORE_PATH")
+val buildNumber = (System.getenv("VERSION_CODE") ?: "1").toInt()
+
+android {
+    namespace = "io.github.niravgrowlity.quotewidget"
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "io.github.niravgrowlity.quotewidget"
+        minSdk = 26
+        targetSdk = 34
+        versionCode = buildNumber
+        versionName = "1.0.$buildNumber"
+        buildConfigField("String", "UPDATE_REPO", "\"Nirav-Growlity/quote-widget\"")
+    }
+
+    signingConfigs {
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+                storeType = "pkcs12"
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = if (keystorePath != null) signingConfigs.getByName("release")
+                            else signingConfigs.getByName("debug")
+        }
+    }
+
+    buildFeatures { buildConfig = true }
+    lint { checkReleaseBuilds = false }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = "17" }
+}

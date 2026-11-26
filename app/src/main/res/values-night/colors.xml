@@ -1,0 +1,10 @@
+<resources>
+    <color name="tonal_bg">#4A4458</color>
+    <color name="tonal_text">#E8DEF8</color>
+    <color name="surface_bg">#211F26</color>
+    <color name="surface_text">#E6E0E9</color>
+    <color name="accent_bg">#D0BCFF</color>
+    <color name="accent_text">#381E72</color>
+    <color name="app_primary">#D0BCFF</color>
+    <color name="app_accent">#EFB8C8</color>
+</resources>
