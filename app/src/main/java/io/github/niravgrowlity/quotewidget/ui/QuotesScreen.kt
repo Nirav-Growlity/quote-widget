@@ -2,6 +2,7 @@
 
 package io.github.niravgrowlity.quotewidget.ui
 
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -208,6 +209,12 @@ fun QuotesScreen(state: AppState, padding: PaddingValues, onAdd: () -> Unit) {
 @Composable
 private fun NowShowing(quote: Quote, position: Int, total: Int, pinned: Boolean, onNext: () -> Unit) {
     val colors = MaterialTheme.colorScheme
+    val ctx = LocalContext.current
+    // The widget's chosen font, so the card previews it.
+    val font = QuoteStore.font(ctx)
+    val heroStyle = remember(font) {
+        font.typeface(ctx)?.let { QuoteType.hero.copy(fontFamily = FontFamily(it)) } ?: QuoteType.hero
+    }
     Surface(
         color = colors.primaryContainer,
         contentColor = colors.onPrimaryContainer,
@@ -228,7 +235,7 @@ private fun NowShowing(quote: Quote, position: Int, total: Int, pinned: Boolean,
             ) { text ->
                 val (body, author) = QuoteFormat.split(text)
                 Column {
-                    Text(body, style = QuoteType.hero, maxLines = 10, overflow = TextOverflow.Ellipsis)
+                    Text(body, style = heroStyle, maxLines = 10, overflow = TextOverflow.Ellipsis)
                     if (author != null) {
                         Text(
                             "— $author",

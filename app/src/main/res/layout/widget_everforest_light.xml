@@ -49,6 +49,13 @@
                     android:textColor="#5C6A72"
                     android:textSize="18sp" />
 
+                <!-- A library font is drawn by a widget_font_* TextView added here at runtime -->
+                <FrameLayout
+                    android:id="@+id/widget_text_slot"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
+
                 <TextView
                     android:id="@+id/widget_author"
                     android:layout_width="match_parent"

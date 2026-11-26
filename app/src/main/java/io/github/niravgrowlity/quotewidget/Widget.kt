@@ -154,15 +154,40 @@ object WidgetRenderer {
         }
     }
 
+    /**
+     * The quote text in a library font: that font's one-TextView layout, coloured like the
+     * theme. On Android 12+ the colour is passed as a resource, so the launcher resolves it and
+     * wallpaper colours and day/night switches still apply.
+     */
+    private fun fontText(ctx: Context, font: QuoteFont, style: WidgetStyle, text: CharSequence, sp: Float, gravity: Int): RemoteViews {
+        val v = RemoteViews(ctx.packageName, font.layout(style.shadow))
+        v.setTextViewText(R.id.font_text, text)
+        v.setTextViewTextSize(R.id.font_text, TypedValue.COMPLEX_UNIT_SP, sp)
+        v.setInt(R.id.font_text, "setGravity", gravity)
+        val color = style.textColor(QuoteStore.themeMode(ctx))
+        if (Build.VERSION.SDK_INT >= 31) {
+            v.setColorStateList(R.id.font_text, "setTextColor", color)
+        } else {
+            v.setTextColor(R.id.font_text, ctx.getColor(color))
+        }
+        return v
+    }
+
     /** The quote as one item in the scrollable list. Tapping it still goes to the next quote. */
     fun scrollItem(ctx: Context, text: String, style: WidgetStyle = QuoteStore.style(ctx)): RemoteViews {
+        val gravity = if (!style.leftAligned && QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER_HORIZONTAL else Gravity.START
+        val font = QuoteStore.font(ctx)
+        if (font != QuoteFont.THEME) {
+            val px = { dp: Float -> (dp * ctx.resources.displayMetrics.density).toInt() }
+            val item = fontText(ctx, font, style, text, READABLE_SP, gravity)
+            item.setViewPadding(R.id.font_text, 0, 0, px(8f), px(4f))
+            item.setOnClickFillInIntent(R.id.font_text, Intent())
+            return item
+        }
         val item = RemoteViews(ctx.packageName, style.item(QuoteStore.themeMode(ctx)))
         item.setTextViewText(R.id.widget_item_text, text)
         item.setTextViewTextSize(R.id.widget_item_text, TypedValue.COMPLEX_UNIT_SP, READABLE_SP)
-        item.setInt(
-            R.id.widget_item_text, "setGravity",
-            if (!style.leftAligned && QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER_HORIZONTAL else Gravity.START,
-        )
+        item.setInt(R.id.widget_item_text, "setGravity", gravity)
         item.setOnClickFillInIntent(R.id.widget_item_text, Intent())
         return item
     }
@@ -202,11 +227,12 @@ object WidgetRenderer {
         val pinned = rotation.any { it.pinned }
         val metaWanted = sampleText == null && (QuoteStore.showCounter(ctx) || pinned)
         val maxSp = (MAX_SP * QuoteStore.textSize(ctx).scale).coerceAtLeast(READABLE_SP)
+        val font = QuoteStore.font(ctx)
         val fitted = fitTextSize(
             ctx, body,
             widthDp - 2 * PADDING_DP - style.startDp,
             heightDp - 2 * PADDING_DP - (if (metaWanted) META_DP else 0f) - (if (author != null) AUTHOR_DP else 0f),
-            maxSp, style.typeface(),
+            maxSp, font.typeface(ctx) ?: style.typeface(),
         )
         val scrolling = fitted == null && interactive
         val hGravity = if (!style.leftAligned && QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER_HORIZONTAL else Gravity.START
@@ -215,9 +241,16 @@ object WidgetRenderer {
             val sp = fitted ?: READABLE_SP
             rv.setViewVisibility(R.id.widget_list, View.GONE)
             rv.setViewVisibility(R.id.widget_body, View.VISIBLE)
-            rv.setTextViewText(R.id.widget_text, body)
-            rv.setTextViewTextSize(R.id.widget_text, TypedValue.COMPLEX_UNIT_SP, sp)
-            rv.setInt(R.id.widget_text, "setGravity", hGravity)
+            if (font == QuoteFont.THEME) {
+                rv.setTextViewText(R.id.widget_text, body)
+                rv.setTextViewTextSize(R.id.widget_text, TypedValue.COMPLEX_UNIT_SP, sp)
+                rv.setInt(R.id.widget_text, "setGravity", hGravity)
+            } else {
+                rv.setViewVisibility(R.id.widget_text, View.GONE)
+                rv.removeAllViews(R.id.widget_text_slot)
+                rv.addView(R.id.widget_text_slot, fontText(ctx, font, style, body, sp, hGravity))
+                rv.setViewVisibility(R.id.widget_text_slot, View.VISIBLE)
+            }
             if (author != null) {
                 rv.setTextViewText(R.id.widget_author, "\u2014 $author")
                 rv.setTextViewTextSize(R.id.widget_author, TypedValue.COMPLEX_UNIT_SP, (sp * 0.62f).coerceIn(11f, 15f))

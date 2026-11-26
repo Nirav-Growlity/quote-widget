@@ -13,6 +13,13 @@ A small Android home-screen widget that shows **your own quotes**. It's free, ha
   - *Originals*: Matcha, Lilac, Apricot, Citrus, Midnight and Mono.
   - *Match my wallpaper*: four Material You styles that take their colours from your wallpaper on Android 12 and newer.
   - Each theme has one accent detail: a quote mark, a side stripe or a corner dot. A quote ending in "— Name" shows the author on their own line.
+- **36 fonts for the quote**, all from Google Fonts:
+  - *Serif*: Playfair Display, Cormorant, EB Garamond, Lora, Libre Baskerville, Fraunces, Instrument Serif, DM Serif Display, Bodoni Moda and Crimson Pro, with italic versions of several.
+  - *Sans*: Manrope, Outfit, Space Grotesk, Josefin Sans, Poppins, Quicksand and Syne.
+  - *Handwritten*: Caveat, Dancing Script, Great Vibes, Sacramento, Homemade Apple, Patrick Hand and Kalam.
+  - *Typewriter*: Special Elite, Courier Prime, IBM Plex Mono and JetBrains Mono.
+  - *Display*: Abril Fatface, Bebas Neue, Alfa Slab One and Righteous.
+  - Every font works with every theme, and *Theme font* keeps each theme's own font.
 - **Built to be calm.** The app has two tabs. *Quotes* holds your collection, with the quote currently on your widget at the top. *Widget* controls how it looks and how often it changes.
 - **Updates itself from this repo.** Each push to `main` builds a signed APK and publishes it as a release. The app checks for a newer release when you open it and installs it after you confirm.
 
@@ -43,11 +50,18 @@ The app is built so it does almost nothing in the background:
 - It signs the APK with the key in the repository secrets `KEYSTORE_B64` and `KEYSTORE_PASSWORD`. Every build must use the **same key**, or Android will refuse to update the app.
 - It publishes release `v1.0.<run number>`. The run number is also the app's `versionCode`, which is how the app tells that an update is newer.
 
-## Editing widget styles
+## Editing widget styles and fonts
 
-Widget layouts and colours are generated. Edit `tools/gen_widget_res.py`, then run `python tools/gen_widget_res.py`. It rewrites `res/layout/widget_*`, `res/drawable/wbg_*`, the colour files, and `WidgetLayouts.kt`.
+Widget layouts, colours and fonts are generated, so don't edit the output by hand.
+
+- **Themes:** edit `tools/gen_widget_res.py`, then run `python tools/gen_widget_res.py`. It rewrites `res/layout/widget_*`, `res/drawable/wbg_*`, the colour files, `WidgetStyle.kt` and `QuoteFont.kt`.
+- **Fonts:** edit the list in `tools/fonts.py`, run `python tools/fetch_fonts.py` (it needs `pip install fonttools`), then run the generator.
+
+Home-screen widgets can only use a font that a layout names in XML. So each font gets a one-line text layout, and the app places it inside the themed widget at runtime.
 
 ## Credits
 
 The classic palettes use the published colour values of these open-source themes. They are all MIT licensed:
 [Catppuccin](https://github.com/catppuccin/catppuccin), [Rosé Pine](https://github.com/rose-pine/rose-pine-theme), [Nord](https://github.com/nordtheme/nord), [Gruvbox](https://github.com/morhetz/gruvbox), [Dracula](https://github.com/dracula/dracula-theme), [Solarized](https://github.com/altercation/solarized), [Tokyo Night](https://github.com/folke/tokyonight.nvim), [Everforest](https://github.com/sainnhe/everforest), [Kanagawa](https://github.com/rebelot/kanagawa.nvim) and [One Dark](https://github.com/atom/atom/tree/master/packages/one-dark-ui).
+
+The fonts come from [Google Fonts](https://fonts.google.com) under the SIL Open Font License or the Apache License. Each licence is in [FONT_LICENSES.txt](FONT_LICENSES.txt). Fonts whose licence allows it are trimmed to Latin characters to keep the app small. Fonts with a Reserved Font Name are included unmodified.

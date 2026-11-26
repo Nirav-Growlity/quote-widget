@@ -57,10 +57,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import io.github.niravgrowlity.quotewidget.FontCategory
+import io.github.niravgrowlity.quotewidget.QuoteFont
 import androidx.compose.ui.viewinterop.AndroidView
 import io.github.niravgrowlity.quotewidget.Align
 import io.github.niravgrowlity.quotewidget.BuildConfig
@@ -126,6 +130,24 @@ fun WidgetScreen(state: AppState, padding: PaddingValues) {
         Text(
             "Classic palettes use the published colours of Catppuccin, Rosé Pine, Nord, Gruvbox, Dracula, " +
                 "Solarized, Tokyo Night, Everforest, Kanagawa and One Dark.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 20.dp),
+        )
+
+        SectionTitle("Font")
+        val font = QuoteStore.font(ctx)
+        val pickFont: (QuoteFont) -> Unit = {
+            QuoteStore.setFont(ctx, it)
+            state.changed()
+        }
+        FontRow(null, listOf(QuoteFont.THEME), font, style, pickFont)
+        FontCategory.entries.forEach { cat ->
+            FontRow(cat.title, QuoteFont.entries.filter { it.category == cat }, font, style, pickFont)
+        }
+        Text(
+            "Open-source fonts from Google Fonts. Letters these fonts don't have, such as other scripts " +
+                "and emoji, use your phone's font.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 20.dp),
@@ -299,6 +321,84 @@ private fun StyleTile(state: AppState, style: WidgetStyle, selected: Boolean, on
             }
             Text(
                 style.label,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected) c.primary else c.onSurface,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun FontRow(
+    title: String?,
+    fonts: List<QuoteFont>,
+    current: QuoteFont,
+    style: WidgetStyle,
+    onPick: (QuoteFont) -> Unit,
+) {
+    if (title != null) {
+        Text(
+            title,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 20.dp, top = 4.dp, bottom = 8.dp),
+        )
+    }
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.padding(bottom = 12.dp),
+    ) {
+        items(fonts, key = { it.name }) { f ->
+            FontTile(f, style, selected = f == current) { onPick(f) }
+        }
+    }
+}
+
+/** A font shown by writing a short sample in it, with its name underneath. */
+@Composable
+private fun FontTile(font: QuoteFont, style: WidgetStyle, selected: Boolean, onClick: () -> Unit) {
+    val ctx = LocalContext.current
+    val c = MaterialTheme.colorScheme
+    val family = remember(font, style) {
+        FontFamily(font.typeface(ctx) ?: style.typeface())
+    }
+    Column(
+        Modifier
+            .width(124.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+            .semantics { this.selected = selected },
+    ) {
+        Box(
+            Modifier
+                .size(124.dp, 72.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(if (selected) c.primaryContainer else c.surfaceContainerHigh)
+                .border(
+                    width = if (selected) 2.dp else 0.dp,
+                    color = if (selected) c.primary else c.primary.copy(alpha = 0f),
+                    shape = RoundedCornerShape(20.dp),
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                "Be kind.",
+                fontFamily = family,
+                fontSize = 24.sp,
+                maxLines = 1,
+                color = if (selected) c.onPrimaryContainer else c.onSurface,
+            )
+        }
+        Row(Modifier.padding(start = 6.dp, top = 6.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (selected) {
+                Icon(Icons.Rounded.Check, contentDescription = null, tint = c.primary, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+            }
+            Text(
+                font.label,
                 style = MaterialTheme.typography.labelLarge,
                 color = if (selected) c.primary else c.onSurface,
                 maxLines = 1,

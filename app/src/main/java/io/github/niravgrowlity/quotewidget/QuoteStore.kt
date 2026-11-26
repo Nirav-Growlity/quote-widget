@@ -196,6 +196,9 @@ object QuoteStore {
         enumOr(prefs(ctx).getString("textSize", null), TextSize.MEDIUM)
     fun setTextSize(ctx: Context, s: TextSize) = prefs(ctx).edit().putString("textSize", s.name).apply()
 
+    fun font(ctx: Context): QuoteFont = enumOr(prefs(ctx).getString("font", null), QuoteFont.THEME)
+    fun setFont(ctx: Context, f: QuoteFont) = prefs(ctx).edit().putString("font", f.name).apply()
+
     fun align(ctx: Context): Align = enumOr(prefs(ctx).getString("align", null), Align.CENTER)
     fun setAlign(ctx: Context, a: Align) = prefs(ctx).edit().putString("align", a.name).apply()
 
