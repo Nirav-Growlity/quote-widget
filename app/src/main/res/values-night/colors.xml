@@ -1,10 +1,12 @@
 <resources>
     <color name="tonal_bg">@color/tonal_bg_dark</color>
     <color name="tonal_text">@color/tonal_text_dark</color>
-    <color name="surface_bg">@color/surface_bg_dark</color>
-    <color name="surface_text">@color/surface_text_dark</color>
-    <color name="accent_bg">@color/accent_bg_dark</color>
-    <color name="accent_text">@color/accent_text_dark</color>
-    <color name="app_primary">#D0BCFF</color>
-    <color name="app_accent">#EFB8C8</color>
+    <color name="paper_bg">@color/paper_bg_dark</color>
+    <color name="paper_text">@color/paper_text_dark</color>
+    <color name="paper_mark">@color/paper_mark_dark</color>
+    <color name="bold_bg">@color/bold_bg_dark</color>
+    <color name="bold_text">@color/bold_text_dark</color>
+    <color name="grad_start">@color/grad_start_dark</color>
+    <color name="grad_end">@color/grad_end_dark</color>
+    <color name="grad_text">@color/grad_text_dark</color>
 </resources>

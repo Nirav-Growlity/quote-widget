@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="18dp"
+    android:background="@drawable/wbg_bold_dark">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- Normal mode: quote auto-fitted to the widget -->
+        <TextView
+            android:id="@+id/widget_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="0dp"
+            android:gravity="center"
+            android:fontFamily="sans-serif"
+            android:lineSpacingMultiplier="1.12"
+            android:textColor="@color/bold_text_dark"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <!-- Long-quote mode: scrolls, used when the quote won't fit at a readable size -->
+        <ListView
+            android:id="@+id/widget_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="0dp"
+            android:divider="@null"
+            android:fadeScrollbars="false"
+            android:scrollbarStyle="outsideOverlay"
+            android:scrollbars="vertical"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/widget_meta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:paddingTop="4dp"
+        android:alpha="0.65"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="@color/bold_text_dark"
+        android:textSize="11sp" />
+</LinearLayout>

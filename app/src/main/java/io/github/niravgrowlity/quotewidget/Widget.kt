@@ -113,15 +113,14 @@ class QuoteListService : RemoteViewsService() {
 }
 
 object WidgetRenderer {
-    // Must match the padding / meta line in the widget layouts.
-    private const val PADDING_DP = 16f
-    private const val META_DP = 22f
-    private const val LINE_SPACING = 1.1f
+    // Must match the padding / meta line written by tools/gen_widget_res.py.
+    private const val PADDING_DP = 18f
+    private const val META_DP = 18f
+    private const val LINE_SPACING = 1.12f
     /** Smallest size we'll shrink to. Below this the quote scrolls instead, so it stays readable. */
     const val READABLE_SP = 13f
     private const val MAX_SP = 30f
-    /** Distinct item layouts across all styles/themes (see WidgetStyle.items). */
-    const val ITEM_VIEW_TYPES = 10
+    const val ITEM_VIEW_TYPES = WidgetLayouts.ITEM_VIEW_TYPES
 
     private fun component(ctx: Context) = ComponentName(ctx, QuoteWidgetProvider::class.java)
 
@@ -148,8 +147,8 @@ object WidgetRenderer {
     }
 
     /** The quote as one item in the scrollable list. Tapping it still goes to the next quote. */
-    fun scrollItem(ctx: Context, text: String): RemoteViews {
-        val item = RemoteViews(ctx.packageName, QuoteStore.style(ctx).item(QuoteStore.themeMode(ctx)))
+    fun scrollItem(ctx: Context, text: String, style: WidgetStyle = QuoteStore.style(ctx)): RemoteViews {
+        val item = RemoteViews(ctx.packageName, style.item(QuoteStore.themeMode(ctx)))
         item.setTextViewText(R.id.widget_item_text, text)
         item.setTextViewTextSize(R.id.widget_item_text, TypedValue.COMPLEX_UNIT_SP, READABLE_SP)
         item.setInt(
@@ -160,8 +159,21 @@ object WidgetRenderer {
         return item
     }
 
-    fun build(ctx: Context, widthDp: Int, heightDp: Int, widgetId: Int = 0): RemoteViews {
-        val style = QuoteStore.style(ctx)
+    /**
+     * Builds the widget. [style] overrides the saved style (used for the style picker), and
+     * [interactive] = false builds an in-app preview: no tap actions, and long quotes are shown
+     * clipped instead of in a scroll list (the list adapter can't bind inside the app).
+     * [sampleText] replaces the current quote and hides the corner text (style picker tiles).
+     */
+    fun build(
+        ctx: Context,
+        widthDp: Int,
+        heightDp: Int,
+        widgetId: Int = 0,
+        style: WidgetStyle = QuoteStore.style(ctx),
+        interactive: Boolean = true,
+        sampleText: String? = null,
+    ): RemoteViews {
         val rv = RemoteViews(ctx.packageName, style.layout(QuoteStore.themeMode(ctx)))
         val openApp = PendingIntent.getActivity(
             ctx, 0, Intent(ctx, MainActivity::class.java),
@@ -169,36 +181,37 @@ object WidgetRenderer {
         )
 
         val rotation = QuoteStore.rotation(ctx)
-        val q = QuoteStore.current(ctx)
+        val q = if (sampleText != null) Quote(-1, sampleText, false) else QuoteStore.current(ctx)
         if (q == null) {
             rv.setTextViewText(R.id.widget_text, ctx.getString(R.string.widget_empty))
             rv.setTextViewTextSize(R.id.widget_text, TypedValue.COMPLEX_UNIT_SP, 14f)
             rv.setViewVisibility(R.id.widget_meta, View.GONE)
-            rv.setOnClickPendingIntent(R.id.widget_text, openApp)
+            if (interactive) rv.setOnClickPendingIntent(R.id.widget_text, openApp)
             return rv
         }
 
+        val pinned = rotation.any { it.pinned }
+        val metaWanted = sampleText == null && (QuoteStore.showCounter(ctx) || pinned)
         val maxSp = (MAX_SP * QuoteStore.textSize(ctx).scale).coerceAtLeast(READABLE_SP)
-        val sp = fitTextSize(
+        val fitted = fitTextSize(
             ctx, q.text,
-            widthDp - 2 * PADDING_DP,
-            heightDp - 2 * PADDING_DP - META_DP,
-            maxSp, style.bold,
+            widthDp - 2 * PADDING_DP - style.startDp,
+            heightDp - 2 * PADDING_DP - (if (metaWanted) META_DP else 0f),
+            maxSp, style.typeface(),
         )
-        val scrolling = sp == null
-        val next = Rotation.intent(ctx, Rotation.ACTION_NEXT)
+        val scrolling = fitted == null && interactive
 
         if (!scrolling) {
             rv.setViewVisibility(R.id.widget_list, View.GONE)
             rv.setViewVisibility(R.id.widget_text, View.VISIBLE)
             rv.setTextViewText(R.id.widget_text, q.text)
-            rv.setTextViewTextSize(R.id.widget_text, TypedValue.COMPLEX_UNIT_SP, sp!!)
+            rv.setTextViewTextSize(R.id.widget_text, TypedValue.COMPLEX_UNIT_SP, fitted ?: READABLE_SP)
             rv.setInt(
                 R.id.widget_text, "setGravity",
                 if (QuoteStore.align(ctx) == Align.CENTER) Gravity.CENTER
                 else Gravity.START or Gravity.CENTER_VERTICAL,
             )
-            rv.setOnClickPendingIntent(R.id.widget_text, next)
+            if (interactive) rv.setOnClickPendingIntent(R.id.widget_text, Rotation.intent(ctx, Rotation.ACTION_NEXT))
         } else {
             // Too long to fit at a readable size: show it at READABLE_SP in a scrollable list.
             rv.setViewVisibility(R.id.widget_text, View.GONE)
@@ -207,7 +220,7 @@ object WidgetRenderer {
                 rv.setRemoteAdapter(
                     R.id.widget_list,
                     RemoteViews.RemoteCollectionItems.Builder()
-                        .addItem(q.id, scrollItem(ctx, q.text))
+                        .addItem(q.id, scrollItem(ctx, q.text, style))
                         .setViewTypeCount(ITEM_VIEW_TYPES)
                         .build(),
                 )
@@ -228,17 +241,21 @@ object WidgetRenderer {
             )
         }
 
-        val pos = Math.floorMod(QuoteStore.index(ctx), rotation.size) + 1
-        val meta = buildString {
-            if (scrolling) append("↕ scroll   ")
-            if (rotation.any { it.pinned }) append("★ ")
-            if (QuoteStore.showCounter(ctx)) append("$pos / ${rotation.size}")
-        }.trim()
-        rv.setTextViewText(R.id.widget_meta, meta.ifEmpty { "⋯" })
-        rv.setViewVisibility(R.id.widget_meta, View.VISIBLE)
+        val pos = Math.floorMod(QuoteStore.index(ctx), rotation.size.coerceAtLeast(1)) + 1
+        val counter = when {
+            sampleText != null -> null
+            QuoteStore.showCounter(ctx) && pinned -> "$pos of ${rotation.size} pinned"
+            QuoteStore.showCounter(ctx) -> "$pos of ${rotation.size}"
+            pinned -> "Pinned"
+            else -> null
+        }
+        val meta = listOfNotNull(if (scrolling) "Scroll for more" else null, counter).joinToString("     ")
+        rv.setTextViewText(R.id.widget_meta, meta)
+        // Hidden entirely when empty, so the quote gets that space.
+        rv.setViewVisibility(R.id.widget_meta, if (meta.isEmpty()) View.GONE else View.VISIBLE)
 
         // Tap the quote = next quote. Tap the small corner text = open the app.
-        rv.setOnClickPendingIntent(R.id.widget_meta, openApp)
+        if (interactive) rv.setOnClickPendingIntent(R.id.widget_meta, openApp)
         return rv
     }
 
@@ -247,15 +264,13 @@ object WidgetRenderer {
      * search with the same line-breaking the TextView uses. Returns null if it doesn't fit even
      * at READABLE_SP (then the widget scrolls). Runs only when a widget redraws.
      */
-    private fun fitTextSize(ctx: Context, text: String, wDp: Float, hDp: Float, maxSp: Float, bold: Boolean): Float? {
+    private fun fitTextSize(ctx: Context, text: String, wDp: Float, hDp: Float, maxSp: Float, face: Typeface): Float? {
         val dm = ctx.resources.displayMetrics
         val widthPx = (wDp * dm.density).toInt()
         // 5% safety margin: launcher fonts can differ slightly from ours.
         val heightPx = hDp * dm.density * 0.95f
         if (widthPx <= 0 || heightPx <= 0) return null
-        val paint = TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
-            typeface = if (bold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
-        }
+        val paint = TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply { typeface = face }
         fun fits(sp: Float): Boolean {
             paint.textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, dm)
             val layout = StaticLayout.Builder.obtain(text, 0, text.length, paint, widthPx)

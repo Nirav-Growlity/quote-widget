@@ -4,8 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:background="@drawable/bg_tonal_dark">
+    android:padding="18dp"
+    android:background="@drawable/wbg_tonal_dark">
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -17,16 +17,19 @@
             android:id="@+id/widget_text"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:paddingStart="0dp"
             android:gravity="center"
-            android:lineSpacingMultiplier="1.1"
+            android:fontFamily="sans-serif-medium"
+            android:lineSpacingMultiplier="1.12"
             android:textColor="@color/tonal_text_dark"
             android:textSize="18sp" />
 
-        <!-- Long-quote mode: scrollable, used when the quote won't fit at a readable size -->
+        <!-- Long-quote mode: scrolls, used when the quote won't fit at a readable size -->
         <ListView
             android:id="@+id/widget_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_marginStart="0dp"
             android:divider="@null"
             android:fadeScrollbars="false"
             android:scrollbarStyle="outsideOverlay"
@@ -39,8 +42,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="end"
-        android:paddingTop="6dp"
-        android:alpha="0.7"
+        android:paddingTop="4dp"
+        android:alpha="0.65"
+        android:fontFamily="sans-serif-medium"
         android:textColor="@color/tonal_text_dark"
         android:textSize="11sp" />
 </LinearLayout>
