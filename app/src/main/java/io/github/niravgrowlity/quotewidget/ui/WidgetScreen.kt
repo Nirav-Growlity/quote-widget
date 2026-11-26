@@ -2,6 +2,7 @@
 
 package io.github.niravgrowlity.quotewidget.ui
 
+import android.util.Log
 import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -209,6 +210,7 @@ private fun WidgetPreview(state: AppState, style: WidgetStyle, wDp: Int, hDp: In
                 WidgetRenderer.build(ctx, wDp, hDp, style = style, interactive = false, sampleText = sample)
                     .apply(ctx, box)
             }.onSuccess { box.addView(it) }
+                .onFailure { Log.w("QuoteWidget", "preview failed", it) }
         },
     )
 }

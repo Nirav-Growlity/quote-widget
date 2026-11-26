@@ -221,11 +221,11 @@ private fun NowShowing(quote: Quote, position: Int, total: Int, pinned: Boolean,
                 modifier = Modifier.offset(x = (-3).dp, y = 14.dp),
             )
             AnimatedContent(
-                targetState = quote,
+                targetState = quote.text,
                 transitionSpec = { fadeIn(tween(240)) togetherWith fadeOut(tween(120)) },
                 label = "quote",
-            ) { q ->
-                Text(q.text, style = QuoteType.hero, maxLines = 10, overflow = TextOverflow.Ellipsis)
+            ) { text ->
+                Text(text, style = QuoteType.hero, maxLines = 10, overflow = TextOverflow.Ellipsis)
             }
             Row(Modifier.fillMaxWidth().padding(top = 20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(

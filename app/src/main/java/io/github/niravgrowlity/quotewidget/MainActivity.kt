@@ -3,6 +3,8 @@ package io.github.niravgrowlity.quotewidget
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -18,14 +20,13 @@ import kotlin.concurrent.thread
 
 class MainActivity : ComponentActivity(), UpdateActions {
     private lateinit var state: AppState
-
-    /** An update waiting for the user to allow "install unknown apps"; resumes on return. */
-    private var pendingRelease: Updater.Release? = null
+    private val main = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        state = AppState(applicationContext, this)
+        state = AppState.get(this)
+        state.updates = this
 
         setContent {
             val dark = isDark(state.themeMode)
@@ -53,9 +54,9 @@ class MainActivity : ComponentActivity(), UpdateActions {
         }
         Updater.onConfirmReady = { showPendingConfirm() }
         showPendingConfirm()
-        val release = pendingRelease
+        val release = state.pendingRelease
         if (release != null && packageManager.canRequestPackageInstalls()) {
-            pendingRelease = null
+            state.pendingRelease = null
             install(release)
         }
     }
@@ -79,7 +80,7 @@ class MainActivity : ComponentActivity(), UpdateActions {
         if (manual) state.updateStatus = "Checking for updates…"
         thread {
             val release = try { Updater.fetchLatest() } catch (_: Exception) { null }
-            runOnUiThread {
+            main.post {
                 if (manual) state.updateStatus = null
                 when {
                     release == null -> if (manual) state.say("Couldn't reach GitHub. Check your connection and try again.")
@@ -92,6 +93,7 @@ class MainActivity : ComponentActivity(), UpdateActions {
 
     override fun install(release: Updater.Release) {
         state.available = null
+        if (state.updating) return
         if (!packageManager.canRequestPackageInstalls()) {
             state.needsInstallPermission = release
             return
@@ -101,11 +103,11 @@ class MainActivity : ComponentActivity(), UpdateActions {
         thread {
             try {
                 Updater.downloadAndInstall(this, release) { pct ->
-                    runOnUiThread { state.updateStatus = "Downloading ${release.name}, $pct%" }
+                    main.post { state.updateStatus = "Downloading ${release.name}, $pct%" }
                 }
-                runOnUiThread { state.updateStatus = "Installing ${release.name}…" }
+                main.post { state.updateStatus = "Installing ${release.name}…" }
             } catch (e: Exception) {
-                runOnUiThread {
+                main.post {
                     state.updating = false
                     state.updateStatus = null
                     state.say("Update failed: ${e.message}")
@@ -116,7 +118,7 @@ class MainActivity : ComponentActivity(), UpdateActions {
 
     override fun openInstallSettings(release: Updater.Release) {
         state.needsInstallPermission = null
-        pendingRelease = release
+        state.pendingRelease = release
         startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
     }
 }

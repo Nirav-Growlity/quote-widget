@@ -23,8 +23,23 @@ interface UpdateActions {
 /**
  * UI state. Quotes and settings live in QuoteStore; screens read it directly and observe
  * [tick], which bumps after every change so they recompose.
+ *
+ * One instance per process (see [get]), so a download in progress, an open dialog or a pending
+ * update survive the activity being recreated (rotation, dark-mode switch).
  */
-class AppState(private val ctx: Context, val updates: UpdateActions) {
+class AppState private constructor(private val ctx: Context) {
+    /** The visible activity; swapped on recreation. */
+    lateinit var updates: UpdateActions
+
+    /** An update waiting for the user to allow "install unknown apps". */
+    var pendingRelease: Updater.Release? = null
+
+    companion object {
+        @Volatile private var instance: AppState? = null
+        fun get(ctx: Context): AppState =
+            instance ?: synchronized(this) { instance ?: AppState(ctx.applicationContext).also { instance = it } }
+    }
+
     var tick by mutableIntStateOf(0)
         private set
     var themeMode by mutableStateOf(QuoteStore.themeMode(ctx))
