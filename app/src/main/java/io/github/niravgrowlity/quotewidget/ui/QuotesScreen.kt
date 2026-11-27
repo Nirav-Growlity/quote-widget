@@ -2,12 +2,13 @@
 
 package io.github.niravgrowlity.quotewidget.ui
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -123,35 +124,13 @@ fun QuotesScreen(state: AppState, padding: PaddingValues, onAdd: () -> Unit) {
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             start = 16.dp, end = 16.dp,
-            top = padding.calculateTopPadding() + 20.dp,
+            top = padding.calculateTopPadding(),
             bottom = padding.calculateBottomPadding() + 96.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        item(key = "title") {
-            Text(
-                "Quotes",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(start = 4.dp, bottom = 12.dp),
-            )
-        }
-        if (current != null && !reordering) {
-            item(key = "now") {
-                NowShowing(
-                    quote = current,
-                    position = Math.floorMod(QuoteStore.index(ctx), rotation.size) + 1,
-                    total = rotation.size,
-                    pinned = rotation.any { it.pinned },
-                    onNext = { Rotation.advance(ctx); state.changed(widget = false) },
-                )
-            }
-        }
         item(key = "collections") {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(top = 16.dp),
-            ) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(collections, key = { it.id }) { c ->
                     FilterChip(
                         selected = c.id == collection.id,
@@ -162,7 +141,7 @@ fun QuotesScreen(state: AppState, padding: PaddingValues, onAdd: () -> Unit) {
                 item(key = "new") {
                     AssistChip(
                         onClick = { naming = QuoteCollection(0, "") },
-                        label = { Text("New collection") },
+                        label = { Text("New") },
                         leadingIcon = { Icon(Icons.Rounded.Add, contentDescription = null, Modifier.size(18.dp)) },
                     )
                 }
@@ -176,7 +155,7 @@ fun QuotesScreen(state: AppState, padding: PaddingValues, onAdd: () -> Unit) {
             ) {
                 if (reordering) {
                     Text(
-                        "Drag the handles to reorder",
+                        "Drag to reorder",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
@@ -212,7 +191,7 @@ fun QuotesScreen(state: AppState, padding: PaddingValues, onAdd: () -> Unit) {
         if (reordering && QuoteStore.cycleOrder(ctx) != CycleOrder.MY_ORDER) {
             item(key = "orderhint") {
                 Text(
-                    "The widget is set to “${QuoteStore.cycleOrder(ctx).label}”. Choose “My order” in the Widget tab to use this order.",
+                    "The widget uses “${QuoteStore.cycleOrder(ctx).label}”. Switch it to “My order” to use this.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
@@ -222,8 +201,7 @@ fun QuotesScreen(state: AppState, padding: PaddingValues, onAdd: () -> Unit) {
         if (shown.isEmpty()) {
             item(key = "none") {
                 Text(
-                    if (showPinned) "Nothing pinned here. Pin quotes to rotate through only those."
-                    else "No quotes in ${collection.name} yet. Tap Add quotes to fill it.",
+                    if (showPinned) "Nothing pinned here yet." else "No quotes here yet.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 12.dp),
@@ -272,7 +250,7 @@ fun QuotesScreen(state: AppState, padding: PaddingValues, onAdd: () -> Unit) {
                     modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
                 )
                 SheetAction(
-                    AppIcons.Widgets, "Show on widget now",
+                    AppIcons.Widgets, "Show on widget",
                     supporting = if (inRotation) null else notInRotationReason(ctx, q),
                     enabled = inRotation,
                 ) {
@@ -291,7 +269,7 @@ fun QuotesScreen(state: AppState, padding: PaddingValues, onAdd: () -> Unit) {
                     selected = null
                 }
                 if (collections.size > 1) {
-                    SheetAction(AppIcons.Folder, "Move to another collection") {
+                    SheetAction(AppIcons.Folder, "Move") {
                         moving = q
                         selected = null
                     }
@@ -351,7 +329,7 @@ fun QuotesScreen(state: AppState, padding: PaddingValues, onAdd: () -> Unit) {
             text = {
                 Text(
                     if (count == 0) "This collection is empty."
-                    else "Its ${if (count == 1) "1 quote" else "$count quotes"} will be deleted too. You can undo this right after.",
+                    else "Deletes its ${if (count == 1) "1 quote" else "$count quotes"} too.",
                 )
             },
             confirmButton = {
@@ -375,11 +353,9 @@ fun QuotesScreen(state: AppState, padding: PaddingValues, onAdd: () -> Unit) {
 }
 
 /** Why "Show on widget now" isn't possible for this quote. */
-private fun notInRotationReason(ctx: android.content.Context, q: Quote): String {
-    if (q.collection !in QuoteStore.rotationCollections(ctx)) {
-        return "This collection isn't in the widget's rotation. Add it in the Widget tab."
-    }
-    return "Only pinned quotes are in rotation. Pin this one first."
+internal fun notInRotationReason(ctx: android.content.Context, q: Quote): String {
+    if (q.collection !in QuoteStore.rotationCollections(ctx)) return "Its collection isn't on the widget"
+    return "Only pinned quotes rotate. Pin it first."
 }
 
 @Composable
@@ -401,26 +377,26 @@ private fun CollectionMenu(
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             if (canReorder) {
                 DropdownMenuItem(
-                    text = { Text("Reorder quotes") },
+                    text = { Text("Reorder") },
                     leadingIcon = { Icon(Icons.Rounded.Menu, contentDescription = null) },
                     onClick = { open = false; onReorder() },
                 )
             }
             DropdownMenuItem(
-                text = { Text("Rename collection") },
+                text = { Text("Rename") },
                 leadingIcon = { Icon(Icons.Rounded.Edit, contentDescription = null) },
                 onClick = { open = false; onRename() },
             )
             if (!isFirst) {
                 DropdownMenuItem(
-                    text = { Text("Move collection left") },
+                    text = { Text("Move left") },
                     leadingIcon = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = null) },
                     onClick = { open = false; onMove(-1) },
                 )
             }
             if (!isLast) {
                 DropdownMenuItem(
-                    text = { Text("Move collection right") },
+                    text = { Text("Move right") },
                     leadingIcon = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null) },
                     onClick = { open = false; onMove(1) },
                 )
@@ -444,62 +420,6 @@ private fun CollectionMenu(
 }
 
 @Composable
-private fun NowShowing(quote: Quote, position: Int, total: Int, pinned: Boolean, onNext: () -> Unit) {
-    val colors = MaterialTheme.colorScheme
-    val ctx = LocalContext.current
-    // The widget's chosen font, so the card previews it.
-    val font = QuoteStore.font(ctx)
-    val heroStyle = remember(font) {
-        font.typeface(ctx)?.let { QuoteType.hero.copy(fontFamily = FontFamily(it)) } ?: QuoteType.hero
-    }
-    Surface(
-        color = colors.primaryContainer,
-        contentColor = colors.onPrimaryContainer,
-        shape = RoundedCornerShape(32.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(Modifier.padding(start = 24.dp, end = 20.dp, bottom = 20.dp)) {
-            Text(
-                "“",
-                style = QuoteType.mark,
-                color = colors.primary,
-                modifier = Modifier.offset(x = (-3).dp, y = 14.dp),
-            )
-            AnimatedContent(
-                targetState = quote.text,
-                transitionSpec = { fadeIn(tween(240)) togetherWith fadeOut(tween(120)) },
-                label = "quote",
-            ) { text ->
-                val (body, author) = QuoteFormat.split(text)
-                Column {
-                    Text(body, style = heroStyle, maxLines = 10, overflow = TextOverflow.Ellipsis)
-                    if (author != null) {
-                        Text(
-                            "— $author",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = 12.dp),
-                        )
-                    }
-                }
-            }
-            Row(Modifier.fillMaxWidth().padding(top = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    if (pinned) "On your widget, $position of $total pinned" else "On your widget, $position of $total",
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.weight(1f).alpha(0.75f),
-                )
-                Button(onClick = onNext) {
-                    Icon(AppIcons.Next, contentDescription = null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("Next")
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun QuoteRow(
     quote: Quote,
     isCurrent: Boolean,
@@ -513,7 +433,7 @@ private fun QuoteRow(
         shape = RoundedCornerShape(20.dp),
         color = when {
             elevated -> colors.surfaceContainerHighest
-            isCurrent -> colors.secondaryContainer
+            isCurrent -> colors.primaryContainer
             else -> colors.surfaceContainerLow
         },
         shadowElevation = if (elevated) 6.dp else 0.dp,
@@ -525,7 +445,7 @@ private fun QuoteRow(
                 Text(body, style = QuoteType.row, maxLines = 4, overflow = TextOverflow.Ellipsis)
                 if (author != null) {
                     Text(
-                        "— $author",
+                        author,
                         style = MaterialTheme.typography.labelLarge,
                         color = colors.onSurfaceVariant,
                         modifier = Modifier.padding(top = 6.dp),
@@ -533,7 +453,7 @@ private fun QuoteRow(
                 }
                 if (isCurrent) {
                     Text(
-                        "On your widget now",
+                        "On your widget",
                         style = MaterialTheme.typography.labelMedium,
                         color = colors.primary,
                         modifier = Modifier.padding(top = 8.dp),
@@ -548,11 +468,33 @@ private fun QuoteRow(
 @Composable
 private fun PinButton(pinned: Boolean, onToggle: () -> Unit) {
     val colors = MaterialTheme.colorScheme
-    IconToggleButton(checked = pinned, onCheckedChange = { onToggle() }) {
+    // Same gesture as on the stage: the pin straightens and bounces when it sticks.
+    val scope = rememberCoroutineScope()
+    val pop = remember { Animatable(1f) }
+    val tilt by animateFloatAsState(
+        targetValue = if (pinned) 0f else 35f,
+        animationSpec = spring(dampingRatio = 0.45f, stiffness = 400f),
+        label = "tilt",
+    )
+    IconToggleButton(
+        checked = pinned,
+        onCheckedChange = {
+            onToggle()
+            scope.launch {
+                pop.snapTo(0.6f)
+                pop.animateTo(1f, spring(dampingRatio = 0.35f, stiffness = 500f))
+            }
+        },
+    ) {
         Icon(
             AppIcons.Pin,
             contentDescription = if (pinned) "Unpin" else "Pin",
             tint = if (pinned) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.35f),
+            modifier = Modifier.graphicsLayer {
+                scaleX = pop.value
+                scaleY = pop.value
+                rotationZ = tilt
+            },
         )
     }
 }
@@ -628,7 +570,7 @@ internal fun NameDialog(title: String, initial: String, confirm: String, onDismi
                 value = name,
                 onValueChange = { name = it.take(40) },
                 singleLine = true,
-                placeholder = { Text("For example: Stoics, Work, Morning") },
+                placeholder = { Text("Name") },
                 modifier = Modifier.fillMaxWidth(),
             )
         },
@@ -664,20 +606,9 @@ private fun EmptyQuotes(padding: PaddingValues, onAdd: () -> Unit) {
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            "“",
-            style = QuoteType.mark.copy(fontSize = QuoteType.mark.fontSize * 1.6f, lineHeight = QuoteType.mark.lineHeight * 1.2f),
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-        )
-        Text(
-            "Start your collection",
+            "No quotes yet",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            "Paste quotes you’ve saved anywhere, or restore a backup in Settings. Your widget starts rotating through them right away.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 12.dp, bottom = 28.dp),
+            modifier = Modifier.padding(bottom = 20.dp),
         )
         Button(onClick = onAdd) {
             Icon(Icons.Rounded.Add, contentDescription = null, Modifier.size(18.dp))

@@ -33,6 +33,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Installs next to the released app, so a test build never touches real quotes.
+            applicationIdSuffix = ".debug"
+        }
         release {
             // R8 keeps the APK small despite Compose.
             isMinifyEnabled = true

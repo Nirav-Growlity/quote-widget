@@ -51,9 +51,9 @@ import io.github.niravgrowlity.quotewidget.QuoteParser
 import io.github.niravgrowlity.quotewidget.QuoteStore
 
 private val SPLIT_MODES = listOf(
-    "Auto" to "Splits on blank lines if there are any, otherwise on each line.",
-    "Each line" to "Every line becomes its own quote.",
-    "Blank lines" to "Lines stay together until a blank line, so a quote can have its author underneath.",
+    "Auto" to "Blank lines if there are any, otherwise each line",
+    "Each line" to "One quote per line",
+    "Blank lines" to "A blank line between quotes",
 )
 
 @Composable
@@ -163,13 +163,13 @@ fun AddQuotesScreen(state: AppState, onClose: () -> Unit) {
                         val clip = clipboard.getText()?.text.orEmpty()
                         if (clip.isNotBlank()) text = if (text.isBlank()) clip else text.trimEnd() + "\n" + clip
                     },
-                    label = { Text("Paste from clipboard") },
+                    label = { Text("Paste") },
                     leadingIcon = { Icon(AppIcons.Paste, contentDescription = null, Modifier.size(18.dp)) },
                 )
                 Spacer(Modifier.weight(1f))
                 if (parsed.isNotEmpty()) {
                     Text(
-                        if (parsed.size == 1) "1 quote found" else "${parsed.size} quotes found",
+                        if (parsed.size == 1) "1 quote" else "${parsed.size} quotes",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -184,9 +184,9 @@ fun AddQuotesScreen(state: AppState, onClose: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("Replace the quotes in $targetName", style = MaterialTheme.typography.bodyLarge)
+                        Text("Replace $targetName", style = MaterialTheme.typography.bodyLarge)
                         Text(
-                            "Removes its $existing quotes and pins first",
+                            "Removes its $existing quotes first",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -201,7 +201,7 @@ fun AddQuotesScreen(state: AppState, onClose: () -> Unit) {
         AlertDialog(
             onDismissRequest = { confirmReplace = false },
             title = { Text("Replace $targetName?") },
-            text = { Text("Its $existing quotes and pins will be removed and replaced with these ${parsed.size}.") },
+            text = { Text("Its $existing quotes will be removed.") },
             confirmButton = { TextButton(onClick = { confirmReplace = false; commit() }) { Text("Replace") } },
             dismissButton = { TextButton(onClick = { confirmReplace = false }) { Text("Cancel") } },
         )

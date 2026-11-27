@@ -4,6 +4,13 @@ package io.github.niravgrowlity.quotewidget.ui
 
 import android.util.Log
 import android.widget.FrameLayout
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -92,6 +99,8 @@ import io.github.niravgrowlity.quotewidget.WidgetStyle
 
 private const val SAMPLE = "Small steps, every day."
 
+private val PANES = listOf("Style", "Font", "Layout", "Timing")
+
 @Composable
 fun WidgetScreen(state: AppState, padding: PaddingValues) {
     val ctx = LocalContext.current
@@ -99,6 +108,7 @@ fun WidgetScreen(state: AppState, padding: PaddingValues) {
     val style = QuoteStore.style(ctx)
     val period = QuoteStore.periodMinutes(ctx)
     var customOpen by remember { mutableStateOf(false) }
+    var pane by rememberSaveable { mutableIntStateOf(0) }
 
     fun setPeriod(minutes: Long) {
         QuoteStore.setPeriodMinutes(ctx, minutes)
@@ -106,168 +116,152 @@ fun WidgetScreen(state: AppState, padding: PaddingValues) {
         state.changed(widget = false)
     }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(top = padding.calculateTopPadding() + 20.dp, bottom = padding.calculateBottomPadding() + 24.dp),
-    ) {
-        Text(
-            "Widget",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(start = 20.dp, bottom = 12.dp),
-        )
+    val scope = rememberCoroutineScope()
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            scope.launch {
+                val ok = withContext(Dispatchers.IO) { PhotoBackground.import(ctx, uri) }
+                if (ok) QuoteStore.setStyle(ctx, WidgetStyle.PHOTO) else state.say("Couldn't open that image")
+                state.changed()
+            }
+        }
+    }
+    val choosePhoto = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+    val pick: (WidgetStyle) -> Unit = {
+        if (it.photo && !PhotoBackground.has(ctx)) {
+            choosePhoto()
+        } else {
+            QuoteStore.setStyle(ctx, it)
+            state.changed()
+        }
+    }
+    val font = QuoteStore.font(ctx)
+    val pickFont: (QuoteFont) -> Unit = {
+        QuoteStore.setFont(ctx, it)
+        state.changed()
+    }
 
-        // Live preview on a wallpaper-like backdrop, rendered by the same code as the real widget.
+    Column(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) {
+        // Live preview, rendered by the same code as the real widget. It stays put while the
+        // options scroll, so every change is visible as you make it.
         Backdrop(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), corner = 32) {
-            BoxWithConstraints(Modifier.padding(20.dp).fillMaxWidth().height(168.dp)) {
-                WidgetPreview(state, style, maxWidth.value.toInt(), 168, Modifier.fillMaxSize())
+            BoxWithConstraints(Modifier.padding(20.dp).fillMaxWidth().height(152.dp)) {
+                WidgetPreview(state, style, maxWidth.value.toInt(), 152, Modifier.fillMaxSize())
             }
         }
-        Text(
-            "On your home screen, tap the quote to skip ahead and tap the corner text to open this app.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 10.dp),
-        )
-
-        SectionTitle("Style")
-        val scope = rememberCoroutineScope()
-        val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) {
-                scope.launch {
-                    val ok = withContext(Dispatchers.IO) { PhotoBackground.import(ctx, uri) }
-                    if (ok) QuoteStore.setStyle(ctx, WidgetStyle.PHOTO) else state.say("Couldn't open that image")
-                    state.changed()
-                }
-            }
-        }
-        val choosePhoto = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
-        val pick: (WidgetStyle) -> Unit = {
-            if (it.photo && !PhotoBackground.has(ctx)) {
-                choosePhoto()
-            } else {
-                QuoteStore.setStyle(ctx, it)
-                state.changed()
-            }
-        }
-        StyleGroup.entries.forEach { group ->
-            StyleRow(group.title, WidgetStyle.entries.filter { it.group == group }, style, state, pick)
-        }
-        if (style.photo) PhotoSettings(state, choosePhoto)
-        Text(
-            "Classic palettes use the published colours of Catppuccin, Rosé Pine, Nord, Gruvbox, Dracula, " +
-                "Solarized, Tokyo Night, Everforest, Kanagawa and One Dark.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 20.dp),
-        )
-
-        SectionTitle("Font")
-        val font = QuoteStore.font(ctx)
-        val pickFont: (QuoteFont) -> Unit = {
-            QuoteStore.setFont(ctx, it)
-            state.changed()
-        }
-        FontRow(null, listOf(QuoteFont.THEME), font, style, pickFont)
-        FontCategory.entries.forEach { cat ->
-            FontRow(cat.title, QuoteFont.entries.filter { it.category == cat }, font, style, pickFont)
-        }
-        Text(
-            "Open-source fonts from Google Fonts. Letters these fonts don't have, such as other scripts " +
-                "and emoji, use your phone's font.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 20.dp),
-        )
-
-        SectionTitle("Appearance")
-        Setting("Largest text size") {
-            Segmented(TextSize.entries, QuoteStore.textSize(ctx), { it.label }) {
-                QuoteStore.setTextSize(ctx, it)
-                state.changed()
-            }
-        }
-        Setting("Alignment") {
-            if (style.leftAligned) {
-                Text(
-                    "${style.label} is designed around its left edge, so it always aligns left.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                Segmented(Align.entries, QuoteStore.align(ctx), { it.label }) {
-                    QuoteStore.setAlign(ctx, it)
-                    state.changed()
-                }
-            }
-        }
-        SwitchRow("Show position", "Adds “3 of 12” in the corner", QuoteStore.showCounter(ctx)) {
-            QuoteStore.setShowCounter(ctx, it)
-            state.changed()
+        Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 6.dp)) {
+            Segmented(PANES, PANES[pane], { it }) { pane = PANES.indexOf(it) }
         }
 
-        SectionTitle("Rotation")
-        Setting("Change quote every") {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ROTATION_PRESETS.forEach { (minutes, label) ->
-                    FilterChip(selected = period == minutes, onClick = { setPeriod(minutes) }, label = { Text(label) })
-                }
-                val custom = ROTATION_PRESETS.none { it.first == period }
-                FilterChip(
-                    selected = custom,
-                    onClick = { customOpen = true },
-                    label = { Text(if (custom) "Every ${describe(period)}" else "Custom") },
-                )
-            }
-        }
-        val collections = QuoteStore.collections(ctx)
-        val inRotation = QuoteStore.rotationCollections(ctx)
-        if (collections.size > 1) {
-            Setting("Collections on the widget") {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    collections.forEach { c ->
-                        FilterChip(
-                            selected = c.id in inRotation,
-                            onClick = {
-                                val next = if (c.id in inRotation) inRotation - c.id else inRotation + c.id
-                                if (next.isNotEmpty()) {
-                                    QuoteStore.setRotationCollections(ctx, next)
+        AnimatedContent(
+            targetState = pane,
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            transitionSpec = {
+                val dir = if (targetState > initialState) 1 else -1
+                (fadeIn(tween(180)) + slideInHorizontally(tween(240)) { dir * it / 12 }) togetherWith fadeOut(tween(90))
+            },
+            label = "pane",
+        ) { p ->
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(top = 10.dp, bottom = padding.calculateBottomPadding() + 24.dp),
+            ) {
+                when (p) {
+                    0 -> {
+                        StyleGroup.entries.forEach { group ->
+                            StyleRow(group.title, WidgetStyle.entries.filter { it.group == group }, style, state, pick)
+                        }
+                        if (style.photo) PhotoSettings(state, choosePhoto)
+                    }
+                    1 -> {
+                        FontRow(null, listOf(QuoteFont.THEME), font, style, pickFont)
+                        FontCategory.entries.forEach { cat ->
+                            FontRow(cat.title, QuoteFont.entries.filter { it.category == cat }, font, style, pickFont)
+                        }
+                    }
+                    2 -> {
+                        Setting("Text size") {
+                            Segmented(TextSize.entries, QuoteStore.textSize(ctx), { it.label }) {
+                                QuoteStore.setTextSize(ctx, it)
+                                state.changed()
+                            }
+                        }
+                        Setting("Alignment") {
+                            if (style.leftAligned) {
+                                Text(
+                                    "${style.label} always aligns left.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            } else {
+                                Segmented(Align.entries, QuoteStore.align(ctx), { it.label }) {
+                                    QuoteStore.setAlign(ctx, it)
                                     state.changed()
                                 }
-                            },
-                            label = { Text(c.name) },
-                        )
+                            }
+                        }
+                        SwitchRow("Show position", "“3 of 12” in the corner", QuoteStore.showCounter(ctx)) {
+                            QuoteStore.setShowCounter(ctx, it)
+                            state.changed()
+                        }
+                    }
+                    else -> {
+                        Setting("New quote every") {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                ROTATION_PRESETS.forEach { (minutes, label) ->
+                                    FilterChip(selected = period == minutes, onClick = { setPeriod(minutes) }, label = { Text(label) })
+                                }
+                                val custom = ROTATION_PRESETS.none { it.first == period }
+                                FilterChip(
+                                    selected = custom,
+                                    onClick = { customOpen = true },
+                                    label = { Text(if (custom) describe(period) else "Custom") },
+                                )
+                            }
+                        }
+                        val collections = QuoteStore.collections(ctx)
+                        val inRotation = QuoteStore.rotationCollections(ctx)
+                        if (collections.size > 1) {
+                            Setting("Collections") {
+                                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    collections.forEach { c ->
+                                        FilterChip(
+                                            selected = c.id in inRotation,
+                                            onClick = {
+                                                val next = if (c.id in inRotation) inRotation - c.id else inRotation + c.id
+                                                if (next.isNotEmpty()) {
+                                                    QuoteStore.setRotationCollections(ctx, next)
+                                                    state.changed()
+                                                }
+                                            },
+                                            label = { Text(c.name) },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Setting("Order") {
+                            val order = QuoteStore.cycleOrder(ctx)
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                CycleOrder.entries.forEach { o ->
+                                    FilterChip(
+                                        selected = order == o,
+                                        onClick = { QuoteStore.setCycleOrder(ctx, o); state.changed() },
+                                        label = { Text(o.label) },
+                                    )
+                                }
+                            }
+                        }
+                        if (inRotation.size > 1) {
+                            SwitchRow("Alternate collections", "One quote from each in turn", QuoteStore.alternate(ctx)) {
+                                QuoteStore.setAlternate(ctx, it)
+                                state.changed()
+                            }
+                        }
                     }
                 }
-            }
-        }
-        Setting("Order") {
-            val order = QuoteStore.cycleOrder(ctx)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                CycleOrder.entries.forEach { o ->
-                    FilterChip(
-                        selected = order == o,
-                        onClick = { QuoteStore.setCycleOrder(ctx, o); state.changed() },
-                        label = { Text(o.label) },
-                    )
-                }
-            }
-            Text(
-                order.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (inRotation.size > 1) {
-            SwitchRow(
-                "Alternate between collections",
-                "One quote from each collection in turn, instead of one collection after another",
-                QuoteStore.alternate(ctx),
-            ) {
-                QuoteStore.setAlternate(ctx, it)
-                state.changed()
             }
         }
     }
@@ -303,11 +297,11 @@ private fun WidgetPreview(state: AppState, style: WidgetStyle, wDp: Int, hDp: In
 
 @Composable
 private fun Backdrop(modifier: Modifier, corner: Int, content: @Composable () -> Unit) {
-    val c = MaterialTheme.colorScheme
+    // Stands in for a wallpaper, in two of the stage colours.
     Box(
         modifier
             .clip(RoundedCornerShape(corner.dp))
-            .background(Brush.linearGradient(listOf(c.primary, c.tertiary))),
+            .background(Brush.linearGradient(listOf(StageColors.all[5].field, StageColors.all[2].field))),
     ) { content() }
 }
 
@@ -391,7 +385,7 @@ private fun PhotoSettings(state: AppState, onChoose: () -> Unit) {
     ) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                if (has) "Photo background" else "Choose a photo for the background",
+                if (has) "Photo" else "Choose a photo",
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.weight(1f),
             )
@@ -413,12 +407,6 @@ private fun PhotoSettings(state: AppState, onChoose: () -> Unit) {
 
         Setting("Fit") {
             Segmented(PhotoFit.entries, PhotoBackground.fit(ctx), { it.label }) { PhotoBackground.setFit(ctx, it); changed() }
-            Text(
-                "Fill crops the photo to the widget’s shape. Fit shows all of it, with the photo’s own colour around it.",
-                style = MaterialTheme.typography.bodySmall,
-                color = c.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp),
-            )
         }
         SliderSetting("Blur", PhotoBackground.blur(ctx), 20, { if (it == 0) "Off" else "$it" }) {
             PhotoBackground.setBlur(ctx, it); changed()
@@ -441,7 +429,7 @@ private fun PhotoSettings(state: AppState, onChoose: () -> Unit) {
         }
         SwitchRow(
             "Keep text readable",
-            "Darkens or lightens the photo behind the text just enough for it to stand out",
+            "Tints the photo behind the text",
             PhotoBackground.keepReadable(ctx),
         ) { PhotoBackground.setKeepReadable(ctx, it); changed() }
     }
@@ -575,10 +563,9 @@ private fun FontTile(font: QuoteFont, style: WidgetStyle, selected: Boolean, onC
 internal fun SectionTitle(text: String) {
     Text(
         text,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 20.dp, top = 32.dp, bottom = 10.dp),
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 20.dp, top = 28.dp, bottom = 6.dp),
     )
 }
 
@@ -604,7 +591,7 @@ internal fun <T> Segmented(options: List<T>, selected: T, label: (T) -> String, 
 }
 
 @Composable
-internal fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+internal fun SwitchRow(title: String, subtitle: String?, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -614,7 +601,9 @@ internal fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChan
     ) {
         Column(Modifier.weight(1f).padding(end = 16.dp)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (subtitle != null) {
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         Switch(checked = checked, onCheckedChange = null)
     }
@@ -645,7 +634,7 @@ private fun CustomPeriodDialog(current: Long, onDismiss: () -> Unit, onSave: (Lo
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Change quote every") },
+        title = { Text("New quote every") },
         text = {
             Column {
                 OutlinedTextField(
@@ -655,7 +644,7 @@ private fun CustomPeriodDialog(current: Long, onDismiss: () -> Unit, onSave: (Lo
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = !valid,
                     supportingText = {
-                        if (!valid) Text("The shortest is ${QuoteStore.MIN_PERIOD_MINUTES} minutes, to save battery")
+                        if (!valid) Text("At least ${QuoteStore.MIN_PERIOD_MINUTES} minutes")
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )

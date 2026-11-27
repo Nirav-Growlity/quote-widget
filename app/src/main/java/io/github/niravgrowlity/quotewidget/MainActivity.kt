@@ -97,13 +97,18 @@ class MainActivity : ComponentActivity(), UpdateActions {
     }
 
     override fun checkForUpdate(manual: Boolean) {
+        // A test build has its own package name, so it can't install a released APK over itself.
+        if (BuildConfig.DEBUG) {
+            if (manual) state.say("Updates are off in test builds")
+            return
+        }
         if (manual) state.updateStatus = "Checking for updates…"
         thread {
             val release = try { Updater.fetchLatest() } catch (_: Exception) { null }
             main.post {
                 if (manual) state.updateStatus = null
                 when {
-                    release == null -> if (manual) state.say("Couldn't reach GitHub. Check your connection and try again.")
+                    release == null -> if (manual) state.say("Couldn't reach GitHub")
                     release.versionCode <= BuildConfig.VERSION_CODE -> if (manual) state.say("You’re on the latest version")
                     else -> state.available = release
                 }
