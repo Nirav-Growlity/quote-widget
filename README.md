@@ -14,6 +14,7 @@ A small Android home-screen widget that shows **your own quotes**. It's free, ha
 - **Light, dark, or follow the system.** This applies to both the app and the widget.
 - **27 widget themes, all flat colours with no gradients.**
   - *Classic palettes*: Catppuccin, Rosé Pine, Nord, Gruvbox, Dracula, Solarized, Tokyo Night, Everforest, Kanagawa and One Dark, in their light and dark variants.
+  - *Bright*: Sunrise, Lemonade, Bubblegum, Mint Soda, Blue Sky, Watermelon, Tangerine and Grape Soda.
   - *Originals*: Matcha, Lilac, Apricot, Citrus, Midnight and Mono.
   - *Match my wallpaper*: four Material You styles that take their colours from your wallpaper on Android 12 and newer.
   - Each theme has one accent detail: a quote mark, a side stripe or a corner dot. A quote ending in "— Name" shows the author on their own line.

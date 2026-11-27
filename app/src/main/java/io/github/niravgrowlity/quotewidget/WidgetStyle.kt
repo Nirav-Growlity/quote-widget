@@ -6,6 +6,7 @@ import android.graphics.Typeface
 
 /** How themes are grouped in the style picker, in display order. */
 enum class StyleGroup(val title: String) {
+    BRIGHT("Bright"),
     PALETTE("Classic palettes"),
     ORIGINAL("Originals"),
     WALLPAPER("Match my wallpaper"),
@@ -140,6 +141,46 @@ enum class WidgetStyle(
         layouts = intArrayOf(R.layout.widget_one_dark, R.layout.widget_one_dark, R.layout.widget_one_dark),
         items = intArrayOf(R.layout.widget_item_one_dark, R.layout.widget_item_one_dark, R.layout.widget_item_one_dark),
     ),
+    SUNRISE(
+        "Sunrise", StyleGroup.BRIGHT, family = "sans-serif-medium", bold = false, startDp = 0f, leftAligned = false, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_sunrise, R.layout.widget_sunrise, R.layout.widget_sunrise),
+        items = intArrayOf(R.layout.widget_item_sunrise, R.layout.widget_item_sunrise, R.layout.widget_item_sunrise),
+    ),
+    LEMONADE(
+        "Lemonade", StyleGroup.BRIGHT, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_lemonade, R.layout.widget_lemonade, R.layout.widget_lemonade),
+        items = intArrayOf(R.layout.widget_item_lemonade, R.layout.widget_item_lemonade, R.layout.widget_item_lemonade),
+    ),
+    BUBBLEGUM(
+        "Bubblegum", StyleGroup.BRIGHT, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_bubblegum, R.layout.widget_bubblegum, R.layout.widget_bubblegum),
+        items = intArrayOf(R.layout.widget_item_bubblegum, R.layout.widget_item_bubblegum, R.layout.widget_item_bubblegum),
+    ),
+    MINT_SODA(
+        "Mint Soda", StyleGroup.BRIGHT, family = "sans-serif-medium", bold = false, startDp = 0f, leftAligned = false, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_mint_soda, R.layout.widget_mint_soda, R.layout.widget_mint_soda),
+        items = intArrayOf(R.layout.widget_item_mint_soda, R.layout.widget_item_mint_soda, R.layout.widget_item_mint_soda),
+    ),
+    BLUE_SKY(
+        "Blue Sky", StyleGroup.BRIGHT, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_blue_sky, R.layout.widget_blue_sky, R.layout.widget_blue_sky),
+        items = intArrayOf(R.layout.widget_item_blue_sky, R.layout.widget_item_blue_sky, R.layout.widget_item_blue_sky),
+    ),
+    WATERMELON(
+        "Watermelon", StyleGroup.BRIGHT, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_watermelon, R.layout.widget_watermelon, R.layout.widget_watermelon),
+        items = intArrayOf(R.layout.widget_item_watermelon, R.layout.widget_item_watermelon, R.layout.widget_item_watermelon),
+    ),
+    TANGERINE(
+        "Tangerine", StyleGroup.BRIGHT, family = "sans-serif", bold = true, startDp = 0f, leftAligned = false, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_tangerine, R.layout.widget_tangerine, R.layout.widget_tangerine),
+        items = intArrayOf(R.layout.widget_item_tangerine, R.layout.widget_item_tangerine, R.layout.widget_item_tangerine),
+    ),
+    GRAPE_SODA(
+        "Grape Soda", StyleGroup.BRIGHT, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_grape_soda, R.layout.widget_grape_soda, R.layout.widget_grape_soda),
+        items = intArrayOf(R.layout.widget_item_grape_soda, R.layout.widget_item_grape_soda, R.layout.widget_item_grape_soda),
+    ),
     MATCHA(
         "Matcha", StyleGroup.ORIGINAL, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_matcha, R.layout.widget_matcha, R.layout.widget_matcha),
@@ -184,6 +225,6 @@ enum class WidgetStyle(
 
     companion object {
         /** Number of distinct scroll-mode item layouts; the widget list adapter needs it. */
-        const val ITEM_VIEW_TYPES = 36
+        const val ITEM_VIEW_TYPES = 44
     }
 }

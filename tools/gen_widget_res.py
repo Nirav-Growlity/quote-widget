@@ -82,6 +82,23 @@ THEMES = [
          fg="#545464", acc="#C84053", font="serif", deco="mark"),
     dict(enum="ONE_DARK", label="One Dark", group="palette", bg=("solid", "#282C34"),
          fg="#ABB2BF", acc="#61AFEF", font="monospace", deco="dot"),
+    # --- bright: loud, happy colours, some on a two-colour gradient ---
+    dict(enum="SUNRISE", label="Sunrise", group="bright", bg=("gradient", ["#FFB36B", "#FF7A93"]),
+         fg="#40101F", acc="#FFFFFF", font="sans-serif-medium", deco="dot"),
+    dict(enum="LEMONADE", label="Lemonade", group="bright", bg=("gradient", ["#FFF27A", "#FFC93C"]),
+         fg="#3A2A00", acc="#FF6B3D", font="serif", deco="mark"),
+    dict(enum="BUBBLEGUM", label="Bubblegum", group="bright", bg=("solid", "#FFC2E2"),
+         fg="#4A0E33", acc="#FF3D9A", font="sans-serif-medium", deco="stripe"),
+    dict(enum="MINT_SODA", label="Mint Soda", group="bright", bg=("gradient", ["#B8F5D8", "#7FE3F0"]),
+         fg="#0B3B3A", acc="#00A389", font="sans-serif-medium", deco="dot"),
+    dict(enum="BLUE_SKY", label="Blue Sky", group="bright", bg=("gradient", ["#9BD4FF", "#C9B8FF"]),
+         fg="#1B2259", acc="#4B56F0", font="serif", deco="mark"),
+    dict(enum="WATERMELON", label="Watermelon", group="bright", bg=("gradient", ["#FF8FA3", "#FFC9A6"]),
+         fg="#4A0B1C", acc="#14804A", font="serif", deco="stripe"),
+    dict(enum="TANGERINE", label="Tangerine", group="bright", bg=("solid", "#FF9A3D"),
+         fg="#3A1700", acc="#FFFFFF", font="sans-serif", bold=True),
+    dict(enum="GRAPE_SODA", label="Grape Soda", group="bright", bg=("gradient", ["#7B4DFF", "#A23DE0"]),
+         fg="#FFFFFF", acc="#FFD23F", font="sans-serif-medium", deco="stripe"),
     # --- originals ---
     dict(enum="MATCHA", label="Matcha", bg=("solid", "#DCE6CF"), fg="#24361F", acc="#5F8A44",
          font="serif", deco="mark"),
@@ -432,6 +449,7 @@ import android.graphics.Typeface
 
 /** How themes are grouped in the style picker, in display order. */
 enum class StyleGroup(val title: String) {{
+    BRIGHT("Bright"),
     PALETTE("Classic palettes"),
     ORIGINAL("Originals"),
     WALLPAPER("Match my wallpaper"),

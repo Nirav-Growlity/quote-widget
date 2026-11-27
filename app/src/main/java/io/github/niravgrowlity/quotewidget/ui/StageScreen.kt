@@ -5,6 +5,16 @@ package io.github.niravgrowlity.quotewidget.ui
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlinx.coroutines.isActive
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -102,6 +112,19 @@ fun StageScreen(
     val enter = remember { Animatable(0f) }
     LaunchedEffect(Unit) { enter.animateTo(1f, tween(520, easing = FastOutSlowInEasing)) }
 
+    // A soft glow drifts across the colour, one lap every 24 seconds. It rests while a page
+    // covers the stage. Waiting for a frame each lap keeps this from spinning when the phone
+    // has animations turned off.
+    val drift = remember { Animatable(0f) }
+    LaunchedEffect(covered) {
+        if (covered) return@LaunchedEffect
+        while (isActive) {
+            withFrameNanos { }
+            if (drift.value > 1000f) drift.snapTo(drift.value % 1f)
+            drift.animateTo(drift.value + 1f, tween(24_000, easing = LinearEasing))
+        }
+    }
+
     Box(Modifier.fillMaxSize().then(hidden)) {
         VerticalPager(
             state = pager,
@@ -115,6 +138,7 @@ fun StageScreen(
                 collection = if (collections.size > 1) collections.firstOrNull { it.id == q.collection }?.name else null,
                 onWidget = q.id == currentId,
                 entrance = { enter.value },
+                drift = { drift.value },
                 onPin = {
                     QuoteStore.update(ctx, q.copy(pinned = !q.pinned))
                     if (QuoteStore.current(ctx)?.id != currentId) stay[0] = true
@@ -166,6 +190,14 @@ private fun StageControls(modifier: Modifier, onQuotes: () -> Unit, onWidget: ()
     }
 }
 
+private fun DrawScope.glow(center: Offset, radius: Float) {
+    drawCircle(
+        brush = Brush.radialGradient(listOf(Color.White.copy(alpha = 0.20f), Color.Transparent), center, radius),
+        radius = radius,
+        center = center,
+    )
+}
+
 /** Short quotes go big; long ones step down so they still fit. */
 private fun stageSize(chars: Int) = when {
     chars <= 50 -> 44
@@ -182,6 +214,7 @@ private fun StagePage(
     collection: String?,
     onWidget: Boolean,
     entrance: () -> Float,
+    drift: () -> Float,
     onPin: () -> Unit,
     onShow: () -> Unit,
 ) {
@@ -189,7 +222,19 @@ private fun StagePage(
     val (body, author) = remember(quote.text) { QuoteFormat.split(quote.text) }
     val size = stageSize(body.length)
 
-    Box(Modifier.fillMaxSize().background(c.field)) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(c.field)
+            .drawBehind {
+                // Two faint lights wandering in slow loops, read in the draw phase only.
+                val a = drift() * 2f * PI.toFloat()
+                val w = this.size.width
+                val h = this.size.height
+                glow(Offset(w * (0.18f + 0.14f * sin(a)), h * (0.20f + 0.07f * cos(a))), w * 0.80f)
+                glow(Offset(w * (0.88f + 0.12f * cos(a)), h * (0.80f + 0.08f * sin(2f * a))), w * 0.65f)
+            },
+    ) {
         if (collection != null) {
             Text(
                 collection,
