@@ -123,6 +123,8 @@ object WidgetRenderer {
     // Must match the padding / meta line written by tools/gen_widget_res.py.
     private const val PADDING_DP = 18f
     private const val META_DP = 18f
+    /** Height of the foot row when it holds the reload button (22dp icon + 4dp gap). */
+    private const val FOOT_DP = 26f
     private const val LINE_SPACING = 1.12f
     /** Smallest size we'll shrink to. Below this the quote scrolls instead, so it stays readable. */
     const val READABLE_SP = 13f
@@ -272,6 +274,7 @@ object WidgetRenderer {
             rv.setTextColor(R.id.widget_author, photo.accent)
             rv.setTextColor(R.id.widget_meta, photo.text)
             rv.setInt(R.id.widget_text_img, "setColorFilter", photo.text)
+            rv.setInt(R.id.widget_reload, "setColorFilter", photo.text)
         }
         val openApp = PendingIntent.getActivity(
             ctx, 0, Intent(ctx, MainActivity::class.java),
@@ -283,7 +286,7 @@ object WidgetRenderer {
         if (q == null) {
             rv.setTextViewText(R.id.widget_text, ctx.getString(R.string.widget_empty))
             rv.setTextViewTextSize(R.id.widget_text, TypedValue.COMPLEX_UNIT_SP, 14f)
-            rv.setViewVisibility(R.id.widget_meta, View.GONE)
+            rv.setViewVisibility(R.id.widget_foot, View.GONE)
             if (interactive) rv.setOnClickPendingIntent(R.id.widget_body, openApp)
             return rv
         }
@@ -291,6 +294,9 @@ object WidgetRenderer {
         val (body, author) = QuoteFormat.split(q.text)
         val pinned = rotation.any { it.pinned }
         val metaWanted = sampleText == null && (QuoteStore.showCounter(ctx) || pinned)
+        // With nothing pinned the whole library is in play, so offer a button to pull another
+        // quote from it. Pinned quotes are a deliberate choice; the button stays out of the way.
+        val reload = sampleText == null && !pinned && rotation.size > 1
         val maxSp = (MAX_SP * QuoteStore.textSize(ctx).scale).coerceAtLeast(READABLE_SP)
         val font = QuoteStore.font(ctx)
         val face = font.typeface(ctx)
@@ -298,7 +304,8 @@ object WidgetRenderer {
         val fitted = fitTextSize(
             ctx, body,
             textWidthDp,
-            heightDp - 2 * PADDING_DP - (if (metaWanted) META_DP else 0f) - (if (author != null) AUTHOR_DP else 0f),
+            heightDp - 2 * PADDING_DP - (if (reload) FOOT_DP else if (metaWanted) META_DP else 0f) -
+                (if (author != null) AUTHOR_DP else 0f),
             maxSp, face ?: style.typeface(), inset = face != null,
         )
         val scrolling = fitted == null && interactive
@@ -369,9 +376,14 @@ object WidgetRenderer {
         rv.setTextViewText(R.id.widget_meta, meta)
         // Hidden entirely when empty, so the quote gets that space.
         rv.setViewVisibility(R.id.widget_meta, if (meta.isEmpty()) View.GONE else View.VISIBLE)
+        rv.setViewVisibility(R.id.widget_reload, if (reload) View.VISIBLE else View.GONE)
+        rv.setViewVisibility(R.id.widget_foot, if (meta.isEmpty() && !reload) View.GONE else View.VISIBLE)
 
-        // Tap the quote = next quote. Tap the small corner text = open the app.
-        if (interactive) rv.setOnClickPendingIntent(R.id.widget_meta, openApp)
+        // Tap the quote or the reload button = next quote. Tap the small corner text = open the app.
+        if (interactive) {
+            rv.setOnClickPendingIntent(R.id.widget_meta, openApp)
+            if (reload) rv.setOnClickPendingIntent(R.id.widget_reload, Rotation.intent(ctx, Rotation.ACTION_NEXT))
+        }
         return rv
     }
 

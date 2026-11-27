@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Quote Widget</string>
     <string name="widget_desc">Rotates through your own quotes</string>
+    <string name="widget_reload">Next quote</string>
     <string name="widget_empty">No quotes yet. Tap to open the app and paste some.</string>
 </resources>

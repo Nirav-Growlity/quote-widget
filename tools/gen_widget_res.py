@@ -82,6 +82,31 @@ THEMES = [
          fg="#545464", acc="#C84053", font="serif", deco="mark"),
     dict(enum="ONE_DARK", label="One Dark", group="palette", bg=("solid", "#282C34"),
          fg="#ABB2BF", acc="#61AFEF", font="monospace", deco="dot"),
+    # More open-source schemes, colours read from each project's own theme file (all MIT).
+    dict(enum="CATPPUCCIN_FRAPPE", label="Catppuccin Frappé", group="palette", bg=("solid", "#303446"),
+         fg="#C6D0F5", acc="#CA9EE6", font="sans-serif-medium", deco="mark"),
+    dict(enum="CATPPUCCIN_MACCHIATO", label="Catppuccin Macchiato", group="palette", bg=("solid", "#24273A"),
+         fg="#CAD3F5", acc="#C6A0F6", font="sans-serif-medium", deco="mark"),
+    dict(enum="ROSE_PINE_MOON", label="Rosé Pine Moon", group="palette", bg=("solid", "#232136"),
+         fg="#E0DEF4", acc="#EA9A97", font="serif", deco="stripe"),
+    dict(enum="SYNTHWAVE", label="Synthwave ’84", group="palette", bg=("solid", "#262335"),
+         fg="#FFFFFF", acc="#FF7EDB", font="sans-serif-medium", deco="stripe"),
+    dict(enum="COBALT2", label="Cobalt2", group="palette", bg=("solid", "#193549"),
+         fg="#FFFFFF", acc="#FFC600", font="sans-serif-medium", deco="mark"),
+    dict(enum="HORIZON", label="Horizon", group="palette", bg=("solid", "#1C1E26"),
+         fg="#D5D8DA", acc="#E95378", font="serif", deco="stripe"),
+    dict(enum="AYU_LIGHT", label="Ayu Light", group="palette", bg=("solid", "#FCFCFC"),
+         fg="#5C6166", acc="#F29718", font="sans-serif-medium", deco="stripe"),
+    dict(enum="AYU_MIRAGE", label="Ayu Mirage", group="palette", bg=("solid", "#242936"),
+         fg="#CCCAC2", acc="#FFCC66", font="sans-serif-medium", deco="stripe"),
+    dict(enum="FLEXOKI", label="Flexoki", group="palette", bg=("solid", "#FFFCF0"),
+         fg="#100F0F", acc="#BC5215", font="serif", deco="mark"),
+    dict(enum="NIGHT_OWL", label="Night Owl", group="palette", bg=("solid", "#011627"),
+         fg="#D6DEEB", acc="#C792EA", font="monospace", deco="dot"),
+    dict(enum="LIGHT_OWL", label="Light Owl", group="palette", bg=("solid", "#FBFBFB"),
+         fg="#403F53", acc="#4876D6", font="monospace", deco="dot"),
+    dict(enum="ANDROMEDA", label="Andromeda", group="palette", bg=("solid", "#23262E"),
+         fg="#D5CED9", acc="#00E8C5", font="monospace", deco="dot"),
     # --- bright: loud, happy colours, some on a two-colour gradient ---
     dict(enum="SUNRISE", label="Sunrise", group="bright", bg=("gradient", ["#FFB36B", "#FF7A93"]),
          fg="#40101F", acc="#FFFFFF", font="sans-serif-medium", deco="dot"),
@@ -303,16 +328,37 @@ MAIN = """<?xml version="1.0" encoding="utf-8"?>
         </FrameLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/widget_meta"
+    <!-- Foot: the reload button (shown when nothing is pinned) and the corner text -->
+    <LinearLayout
+        android:id="@+id/widget_foot"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="end"
-        android:paddingTop="4dp"
-        android:alpha="0.65"
-        android:fontFamily="sans-serif-medium"
-        android:textColor="{fg}"
-        android:textSize="11sp"{meta_extra} />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingTop="4dp">
+
+        <ImageView
+            android:id="@+id/widget_reload"
+            android:layout_width="30dp"
+            android:layout_height="22dp"
+            android:paddingEnd="8dp"
+            android:alpha="0.65"
+            android:contentDescription="@string/widget_reload"
+            android:scaleType="fitStart"
+            android:src="@drawable/ic_widget_reload"{reload_tint}
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/widget_meta"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:alpha="0.65"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="{fg}"
+            android:textSize="11sp"{meta_extra} />
+    </LinearLayout>
 </LinearLayout>
 """
 MARK = """
@@ -418,7 +464,9 @@ for t in THEMES:
             stripe=stripe, mark=mark, dot=dot, tint=tint.format(i=" " * 20),
             text_extra=(bold_attr + shadow).format(i=" " * 20),
             small_extra=shadow.format(i=" " * 20),
-            meta_extra=shadow.format(i=" " * 8))
+            # The photo style colours the reload icon at runtime, like its text.
+            reload_tint="" if t.get("photo") else f'\n            android:tint="{fg}"',
+            meta_extra=shadow.format(i=" " * 12))
         res(f"layout/widget_{name}.xml", photo_wrap(main_xml) if t.get("photo") else main_xml)
         res(f"layout/widget_item_{name}.xml", ITEM.format(
             fg=fg, font=t["font"], extra=(bold_attr + shadow).format(i=" " * 8),

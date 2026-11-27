@@ -535,12 +535,17 @@ private fun FontTile(font: QuoteFont, style: WidgetStyle, selected: Boolean, onC
                 ),
             contentAlignment = Alignment.Center,
         ) {
+            // Wide faces (typewriter, slab) don't fit at full size: step down until the sample does.
+            var sp by remember(font) { mutableFloatStateOf(24f) }
             Text(
                 "Be kind.",
                 fontFamily = family,
-                fontSize = 24.sp,
+                fontSize = sp.sp,
                 maxLines = 1,
+                softWrap = false,
+                onTextLayout = { if (it.hasVisualOverflow && sp > 12f) sp -= 2f },
                 color = if (selected) c.onPrimaryContainer else c.onSurface,
+                modifier = Modifier.padding(horizontal = 8.dp),
             )
         }
         Row(Modifier.padding(start = 6.dp, top = 6.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {

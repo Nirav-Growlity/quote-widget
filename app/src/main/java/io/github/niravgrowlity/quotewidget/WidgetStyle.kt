@@ -141,6 +141,66 @@ enum class WidgetStyle(
         layouts = intArrayOf(R.layout.widget_one_dark, R.layout.widget_one_dark, R.layout.widget_one_dark),
         items = intArrayOf(R.layout.widget_item_one_dark, R.layout.widget_item_one_dark, R.layout.widget_item_one_dark),
     ),
+    CATPPUCCIN_FRAPPE(
+        "Catppuccin Frappé", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_catppuccin_frappe, R.layout.widget_catppuccin_frappe, R.layout.widget_catppuccin_frappe),
+        items = intArrayOf(R.layout.widget_item_catppuccin_frappe, R.layout.widget_item_catppuccin_frappe, R.layout.widget_item_catppuccin_frappe),
+    ),
+    CATPPUCCIN_MACCHIATO(
+        "Catppuccin Macchiato", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_catppuccin_macchiato, R.layout.widget_catppuccin_macchiato, R.layout.widget_catppuccin_macchiato),
+        items = intArrayOf(R.layout.widget_item_catppuccin_macchiato, R.layout.widget_item_catppuccin_macchiato, R.layout.widget_item_catppuccin_macchiato),
+    ),
+    ROSE_PINE_MOON(
+        "Rosé Pine Moon", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_rose_pine_moon, R.layout.widget_rose_pine_moon, R.layout.widget_rose_pine_moon),
+        items = intArrayOf(R.layout.widget_item_rose_pine_moon, R.layout.widget_item_rose_pine_moon, R.layout.widget_item_rose_pine_moon),
+    ),
+    SYNTHWAVE(
+        "Synthwave ’84", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_synthwave, R.layout.widget_synthwave, R.layout.widget_synthwave),
+        items = intArrayOf(R.layout.widget_item_synthwave, R.layout.widget_item_synthwave, R.layout.widget_item_synthwave),
+    ),
+    COBALT2(
+        "Cobalt2", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_cobalt2, R.layout.widget_cobalt2, R.layout.widget_cobalt2),
+        items = intArrayOf(R.layout.widget_item_cobalt2, R.layout.widget_item_cobalt2, R.layout.widget_item_cobalt2),
+    ),
+    HORIZON(
+        "Horizon", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_horizon, R.layout.widget_horizon, R.layout.widget_horizon),
+        items = intArrayOf(R.layout.widget_item_horizon, R.layout.widget_item_horizon, R.layout.widget_item_horizon),
+    ),
+    AYU_LIGHT(
+        "Ayu Light", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_ayu_light, R.layout.widget_ayu_light, R.layout.widget_ayu_light),
+        items = intArrayOf(R.layout.widget_item_ayu_light, R.layout.widget_item_ayu_light, R.layout.widget_item_ayu_light),
+    ),
+    AYU_MIRAGE(
+        "Ayu Mirage", StyleGroup.PALETTE, family = "sans-serif-medium", bold = false, startDp = 18f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_ayu_mirage, R.layout.widget_ayu_mirage, R.layout.widget_ayu_mirage),
+        items = intArrayOf(R.layout.widget_item_ayu_mirage, R.layout.widget_item_ayu_mirage, R.layout.widget_item_ayu_mirage),
+    ),
+    FLEXOKI(
+        "Flexoki", StyleGroup.PALETTE, family = "serif", bold = false, startDp = 30f, leftAligned = true, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_flexoki, R.layout.widget_flexoki, R.layout.widget_flexoki),
+        items = intArrayOf(R.layout.widget_item_flexoki, R.layout.widget_item_flexoki, R.layout.widget_item_flexoki),
+    ),
+    NIGHT_OWL(
+        "Night Owl", StyleGroup.PALETTE, family = "monospace", bold = false, startDp = 0f, leftAligned = false, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_night_owl, R.layout.widget_night_owl, R.layout.widget_night_owl),
+        items = intArrayOf(R.layout.widget_item_night_owl, R.layout.widget_item_night_owl, R.layout.widget_item_night_owl),
+    ),
+    LIGHT_OWL(
+        "Light Owl", StyleGroup.PALETTE, family = "monospace", bold = false, startDp = 0f, leftAligned = false, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_light_owl, R.layout.widget_light_owl, R.layout.widget_light_owl),
+        items = intArrayOf(R.layout.widget_item_light_owl, R.layout.widget_item_light_owl, R.layout.widget_item_light_owl),
+    ),
+    ANDROMEDA(
+        "Andromeda", StyleGroup.PALETTE, family = "monospace", bold = false, startDp = 0f, leftAligned = false, shadow = false, photo = false,
+        layouts = intArrayOf(R.layout.widget_andromeda, R.layout.widget_andromeda, R.layout.widget_andromeda),
+        items = intArrayOf(R.layout.widget_item_andromeda, R.layout.widget_item_andromeda, R.layout.widget_item_andromeda),
+    ),
     SUNRISE(
         "Sunrise", StyleGroup.BRIGHT, family = "sans-serif-medium", bold = false, startDp = 0f, leftAligned = false, shadow = false, photo = false,
         layouts = intArrayOf(R.layout.widget_sunrise, R.layout.widget_sunrise, R.layout.widget_sunrise),
@@ -225,6 +285,6 @@ enum class WidgetStyle(
 
     companion object {
         /** Number of distinct scroll-mode item layouts; the widget list adapter needs it. */
-        const val ITEM_VIEW_TYPES = 44
+        const val ITEM_VIEW_TYPES = 56
     }
 }

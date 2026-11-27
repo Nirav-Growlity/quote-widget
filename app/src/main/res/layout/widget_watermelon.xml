@@ -84,14 +84,36 @@
         </FrameLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/widget_meta"
+    <!-- Foot: the reload button (shown when nothing is pinned) and the corner text -->
+    <LinearLayout
+        android:id="@+id/widget_foot"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="end"
-        android:paddingTop="4dp"
-        android:alpha="0.65"
-        android:fontFamily="sans-serif-medium"
-        android:textColor="#4A0B1C"
-        android:textSize="11sp" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingTop="4dp">
+
+        <ImageView
+            android:id="@+id/widget_reload"
+            android:layout_width="30dp"
+            android:layout_height="22dp"
+            android:paddingEnd="8dp"
+            android:alpha="0.65"
+            android:contentDescription="@string/widget_reload"
+            android:scaleType="fitStart"
+            android:src="@drawable/ic_widget_reload"
+            android:tint="#4A0B1C"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/widget_meta"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:alpha="0.65"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="#4A0B1C"
+            android:textSize="11sp" />
+    </LinearLayout>
 </LinearLayout>
