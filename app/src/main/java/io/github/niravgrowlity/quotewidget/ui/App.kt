@@ -15,6 +15,10 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -170,20 +174,84 @@ private fun Page(
     )
 }
 
+/**
+ * "A new version is ready": a colour band with the version, what changed in a line or two, and
+ * one clear button. Release notes are commit messages, so they're tidied before being shown.
+ */
+@Composable
+private fun UpdateCard(name: String, notes: String, onInstall: () -> Unit, onLater: () -> Unit) {
+    val c = StageColors.all[1]
+    val (headline, detail) = remember(notes) {
+        val lines = notes.lines().filterNot { it.startsWith("Co-Authored-By", ignoreCase = true) }
+        val first = lines.firstOrNull { it.isNotBlank() }?.trim().orEmpty()
+        // Commit bodies are hard-wrapped; rejoin each paragraph so it wraps to the card instead.
+        val rest = lines.dropWhile { it.isBlank() }.drop(1).joinToString("\n").trim()
+            .split(Regex("\\n\\s*\\n")).joinToString("\n\n") { it.replace("\n", " ").trim() }
+        first to rest
+    }
+    Dialog(onDismissRequest = onLater) {
+        Surface(shape = RoundedCornerShape(32.dp), color = MaterialTheme.colorScheme.surface) {
+            Column {
+                Column(
+                    Modifier.fillMaxWidth().background(c.field).padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 24.dp),
+                ) {
+                    Text(name, style = MaterialTheme.typography.labelLarge, color = c.ink.copy(alpha = 0.75f))
+                    Text(
+                        "A new version is ready",
+                        style = MaterialTheme.typography.displaySmall,
+                        color = c.ink,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+                if (headline.isNotEmpty()) {
+                    Column(
+                        Modifier
+                            .padding(start = 24.dp, end = 24.dp, top = 20.dp)
+                            .heightIn(max = 200.dp)
+                            .verticalScroll(rememberScrollState()),
+                    ) {
+                        Text(headline, style = MaterialTheme.typography.titleMedium)
+                        if (detail.isNotEmpty()) {
+                            Text(
+                                detail,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 8.dp),
+                            )
+                        }
+                    }
+                }
+                Row(
+                    Modifier.fillMaxWidth().padding(start = 16.dp, end = 24.dp, top = 20.dp, bottom = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = onLater) { Text("Later") }
+                    Spacer(Modifier.weight(1f))
+                    PopButton(
+                        onClick = onInstall,
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ) {
+                        Text(
+                            "Install",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.padding(horizontal = 30.dp, vertical = 16.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun UpdateDialogs(state: AppState) {
     state.available?.let { release ->
-        AlertDialog(
-            onDismissRequest = { state.available = null },
-            title = { Text("Update to ${release.name}") },
-            text = {
-                Text(
-                    release.notes.ifBlank { "A new version is ready." },
-                    modifier = Modifier.heightIn(max = 280.dp).verticalScroll(rememberScrollState()),
-                )
-            },
-            confirmButton = { TextButton(onClick = { state.updates.install(release) }) { Text("Install") } },
-            dismissButton = { TextButton(onClick = { state.available = null }) { Text("Later") } },
+        UpdateCard(
+            name = release.name,
+            notes = release.notes,
+            onInstall = { state.updates.install(release) },
+            onLater = { state.available = null },
         )
     }
     state.needsInstallPermission?.let { release ->

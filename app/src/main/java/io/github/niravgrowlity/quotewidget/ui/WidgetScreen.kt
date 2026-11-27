@@ -74,6 +74,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
 import io.github.niravgrowlity.quotewidget.CycleOrder
+import io.github.niravgrowlity.quotewidget.Decoration
 import io.github.niravgrowlity.quotewidget.PhotoBackground
 import io.github.niravgrowlity.quotewidget.PhotoFit
 import kotlinx.coroutines.Dispatchers
@@ -199,6 +200,18 @@ fun WidgetScreen(state: AppState, padding: PaddingValues) {
                                 Segmented(Align.entries, QuoteStore.align(ctx), { it.label }) {
                                     QuoteStore.setAlign(ctx, it)
                                     state.changed()
+                                }
+                            }
+                        }
+                        Setting("Decoration") {
+                            val deco = QuoteStore.decoration(ctx)
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Decoration.entries.forEach { d ->
+                                    FilterChip(
+                                        selected = deco == d,
+                                        onClick = { QuoteStore.setDecoration(ctx, d); state.changed() },
+                                        label = { Text(d.label) },
+                                    )
                                 }
                             }
                         }

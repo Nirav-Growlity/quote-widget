@@ -12,11 +12,12 @@ A small Android home-screen widget that shows **your own quotes**. It's free, ha
 - **Tap the quote** on the widget to skip to the next one. Tap the small corner text to open the app.
 - **Text that fits itself.** Each widget measures its real size and uses the largest text that shows the whole quote. Resize the widget and the text re-fits. Text never shrinks below a readable 13sp. A quote too long for that becomes scrollable, with a scrollbar and a "Scroll for more" hint.
 - **Light, dark, or follow the system.** This applies to both the app and the widget.
-- **47 widget themes.**
-  - *Classic palettes*: Catppuccin, Rosé Pine, Nord, Gruvbox, Dracula, Solarized, Tokyo Night, Everforest, Kanagawa, One Dark, Synthwave ’84, Cobalt2, Horizon, Ayu, Flexoki, Night Owl and Andromeda, many in light and dark variants.
+- **35 widget themes.**
+  - *Classic palettes*: Catppuccin, Rosé Pine, Nord, Gruvbox, Dracula, Solarized, Tokyo Night, Everforest, Synthwave ’84, Cobalt2, Ayu Light and Night Owl, several in light and dark variants.
   - *Bright*: Sunrise, Lemonade, Bubblegum, Mint Soda, Blue Sky, Watermelon, Tangerine and Grape Soda.
   - *Originals*: Matcha, Lilac, Apricot, Citrus, Midnight and Mono.
   - *Match my wallpaper*: four Material You styles that take their colours from your wallpaper on Android 12 and newer.
+  - *Decorations*: optional corner art that works with any theme: sparkles, confetti, hearts, flowers, sun, rainbow, night sky or bubbles.
   - Each theme has one accent detail: a quote mark, a side stripe or a corner dot. A quote ending in "— Name" shows the author on their own line.
 - **36 fonts for the quote**, all from Google Fonts:
   - *Serif*: Playfair Display, Cormorant, EB Garamond, Lora, Libre Baskerville, Fraunces, Instrument Serif, DM Serif Display, Bodoni Moda and Crimson Pro, with italic versions of several.
@@ -67,6 +68,6 @@ Launchers can't load an app's own fonts. So when a library font is chosen, the w
 ## Credits
 
 The classic palettes use the published colour values of these open-source themes. They are all MIT licensed:
-[Catppuccin](https://github.com/catppuccin/catppuccin), [Rosé Pine](https://github.com/rose-pine/rose-pine-theme), [Nord](https://github.com/nordtheme/nord), [Gruvbox](https://github.com/morhetz/gruvbox), [Dracula](https://github.com/dracula/dracula-theme), [Solarized](https://github.com/altercation/solarized), [Tokyo Night](https://github.com/folke/tokyonight.nvim), [Everforest](https://github.com/sainnhe/everforest), [Kanagawa](https://github.com/rebelot/kanagawa.nvim), [One Dark](https://github.com/atom/atom/tree/master/packages/one-dark-ui), [Synthwave ’84](https://github.com/robb0wen/synthwave-vscode), [Cobalt2](https://github.com/wesbos/cobalt2-vscode), [Horizon](https://github.com/jolaleye/horizon-theme-vscode), [Ayu](https://github.com/ayu-theme/ayu-colors), [Flexoki](https://github.com/kepano/flexoki), [Night Owl](https://github.com/sdras/night-owl-vscode-theme) and [Andromeda](https://github.com/EliverLara/Andromeda).
+[Catppuccin](https://github.com/catppuccin/catppuccin), [Rosé Pine](https://github.com/rose-pine/rose-pine-theme), [Nord](https://github.com/nordtheme/nord), [Gruvbox](https://github.com/morhetz/gruvbox), [Dracula](https://github.com/dracula/dracula-theme), [Solarized](https://github.com/altercation/solarized), [Tokyo Night](https://github.com/folke/tokyonight.nvim), [Everforest](https://github.com/sainnhe/everforest), [Synthwave ’84](https://github.com/robb0wen/synthwave-vscode), [Cobalt2](https://github.com/wesbos/cobalt2-vscode), [Ayu](https://github.com/ayu-theme/ayu-colors) and [Night Owl](https://github.com/sdras/night-owl-vscode-theme).
 
 The fonts come from [Google Fonts](https://fonts.google.com) under the SIL Open Font License or the Apache License. Each licence is in [FONT_LICENSES.txt](FONT_LICENSES.txt). Fonts whose licence allows it are trimmed to Latin characters to keep the app small. Fonts with a Reserved Font Name are included unmodified.

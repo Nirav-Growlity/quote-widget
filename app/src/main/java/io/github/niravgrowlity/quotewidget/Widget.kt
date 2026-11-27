@@ -275,7 +275,11 @@ object WidgetRenderer {
             rv.setTextColor(R.id.widget_meta, photo.text)
             rv.setInt(R.id.widget_text_img, "setColorFilter", photo.text)
             rv.setInt(R.id.widget_reload, "setColorFilter", photo.text)
+            rv.setInt(R.id.widget_deco, "setColorFilter", photo.accent)
         }
+        val deco = QuoteStore.decoration(ctx)
+        if (deco.drawable != 0) rv.setImageViewResource(R.id.widget_deco, deco.drawable)
+        rv.setViewVisibility(R.id.widget_deco, if (deco.drawable != 0) View.VISIBLE else View.GONE)
         val openApp = PendingIntent.getActivity(
             ctx, 0, Intent(ctx, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,

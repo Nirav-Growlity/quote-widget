@@ -63,8 +63,8 @@ import io.github.niravgrowlity.quotewidget.Rotation
 import kotlinx.coroutines.launch
 
 /**
- * The first thing you see: one quote filling the screen, in the widget's font. Swipe up or down
- * to browse every quote. Browsing never changes the widget; "Show on widget" does.
+ * The first thing you see: one quote filling the screen, in the widget's font. Swipe down for
+ * the next quote and up for the one before. Browsing never changes the widget; "Show on widget" does.
  */
 @Composable
 fun StageScreen(
@@ -129,6 +129,8 @@ fun StageScreen(
         VerticalPager(
             state = pager,
             modifier = Modifier.fillMaxSize(),
+            // Pull down for the next quote, push up to go back.
+            reverseLayout = true,
             key = { i -> quotes.getOrNull(i)?.id ?: -1L - i },
         ) { page ->
             val q = quotes.getOrNull(page) ?: return@VerticalPager
